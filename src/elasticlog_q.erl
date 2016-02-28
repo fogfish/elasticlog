@@ -1,65 +1,68 @@
 %% @doc
 %%   datalog sigma function supports knowledge statement only.
-%%   
-%%   @todo: 
-%%     * use max score for filtering
-%%     * match by _id (subject) is key/val operation it is more efficient then match 
 -module(elasticlog_q).
 
 -export([
-   sigma/2
+   sigma/1
 ]).
 
 %%
 %% return sigma function
-sigma(Pred, Pattern) ->
+sigma(Pattern) ->
    fun(Heap) ->
       fun(Sock) ->
-         sigma(Sock, Pred, datalog:bind(Heap, Pattern))
+         sigma(Sock, datalog:bind(Heap, Pattern))
       end
    end. 
 
 %%
 %%        
-sigma(Sock, Pred, #{'_' := [Id|_] = Head} = Pattern) ->
-   case maps:is_key(Id, Pattern) of
-      %% statement subject is known, use key/val access pattern
-      true  ->
-         lookup(Sock, Pred, Pattern);         
+sigma(Sock, #{'@' := Pred, '_' := [Key, Val] = Head} = Pattern) ->
+   % binary relation: subject --[p]--> object
+   case Pattern of
+      #{Key := K, Val := V} ->
+         statement(Head, stream_by_kv(Sock, Pred, K, V));
+      #{Key := K} when not is_list(K) ->
+         statement(Head, stream_by_k(Sock, Pred, K));
+      #{Val := V} ->
+         statement(Head, stream_by_v(Sock, Pred, V))
+   end;
 
-      %% use generic pattern match
-      false ->
-         match(Sock, Pred, Pattern)
+sigma(Sock, #{'@' := Pred, '_' := [Key, Val, Crd] = Head} = Pattern) ->
+   % binary relation: subject --[p, c]--> object (augmented with credibility)
+   case Pattern of
+      #{Key := K, Val := V, Crd := C} ->
+         statement(Head, filter(C, stream_by_kv(Sock, Pred, K, V)));
+      #{Key := K, Crd := C} when not is_list(K) ->
+         statement(Head, filter(C, stream_by_k(Sock, Pred, K)));
+      #{Val := V, Crd := C} ->
+         statement(Head, filter(C, stream_by_v(Sock, Pred, V)));
+      #{Key := K, Val := V} ->
+         statement(Head, stream_by_kv(Sock, Pred, K, V));
+      #{Key := K} when not is_list(K) ->
+         statement(Head, stream_by_k(Sock, Pred, K));
+      #{Val := V} ->
+         statement(Head, stream_by_v(Sock, Pred, V))
    end.
 
 %%
-%% 
-lookup(Sock, Pred, #{'_' := [Id, Val] = Head} = Pattern) ->
-   Key = maps:get(Id, Pattern),
-   {ok, Json} = esio:get(Sock, urn(Pred, Key)),
-   stream:build([
-      #{
-         Id  => Key,
-         Val => maps:get(<<"o">>, Json)
-      }
-   ]).
+%%
+stream_by_k(Sock, Pred, Key) ->
+   esio:match(Sock, urn(Pred), #{'_id' => Key}).
+
+stream_by_v(Sock, Pred, Val) ->
+   esio:match(Sock, urn(Pred), #{'o' => Val}).
+
+stream_by_kv(Sock, Pred, Key, Val) ->
+   esio:match(Sock, urn(Pred), #{'_id' => Key, o => Val}).
 
 %%
 %%
-match(Sock, Pred, #{'_' := Head} = Pattern) ->
-   statement(Head, 
-      esio:match(Sock, urn(Pred), 
-         pattern(Head, Pattern)
-      )
-   ).
-
-%%
-%%
-statement([Id, Val], Stream) ->
+statement([Key, Val | _], Stream) ->
    stream:map(
       fun(X) ->
          #{
-            Id  => maps:get(<<"_id">>, X),
+            Key => maps:get(<<"_id">>, X),
             Val => maps:get(<<"o">>, maps:get(<<"_source">>, X))
          }
       end,
@@ -68,27 +71,15 @@ statement([Id, Val], Stream) ->
 
 %%
 %%
-urn(Pred) ->
-   uri:segments([scalar:s(Pred)], {urn, <<"es">>, <<>>}).
-
-urn(Pred, Key) ->
-   uri:segments([scalar:s(Pred), scalar:s(Key)], {urn, <<"es">>, <<>>}).
-
-%%
-%%
-pattern([S, O | _], Heap) ->
-   keycopy(S, '_id', Heap,
-      keycopy(O, 'o', Heap, #{})
+filter(Crd, Stream) ->
+   stream:takewhile(
+      fun(X) -> 
+         maps:get(<<"_score">>, X) >= Crd 
+      end,
+      Stream
    ).
 
-keycopy(KeyA, KeyB, A, B) ->
-   case maps:find(KeyA, A) of
-      error ->
-         B;
-      {ok, Val} ->
-         B#{KeyB => Val}
-   end.
-
-
-
-
+%%
+%%
+urn(Pred) ->
+   uri:segments([scalar:s(Pred)], {urn, <<"es">>, <<>>}).
