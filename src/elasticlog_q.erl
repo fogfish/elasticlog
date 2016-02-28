@@ -21,13 +21,40 @@ sigma(Pred, Pattern) ->
 
 %%
 %%        
-sigma(Sock, Pred, #{'_' := Head} = Pattern) ->
+sigma(Sock, Pred, #{'_' := [Id|_] = Head} = Pattern) ->
+   case maps:is_key(Id, Pattern) of
+      %% statement subject is known, use key/val access pattern
+      true  ->
+         lookup(Sock, Pred, Pattern);         
+
+      %% use generic pattern match
+      false ->
+         match(Sock, Pred, Pattern)
+   end.
+
+%%
+%% 
+lookup(Sock, Pred, #{'_' := [Id, Val] = Head} = Pattern) ->
+   Key = maps:get(Id, Pattern),
+   {ok, Json} = esio:get(Sock, urn(Pred, Key)),
+   stream:build([
+      #{
+         Id  => Key,
+         Val => maps:get(<<"o">>, Json)
+      }
+   ]).
+
+%%
+%%
+match(Sock, Pred, #{'_' := Head} = Pattern) ->
    statement(Head, 
       esio:match(Sock, urn(Pred), 
          pattern(Head, Pattern)
       )
    ).
 
+%%
+%%
 statement([Id, Val], Stream) ->
    stream:map(
       fun(X) ->
@@ -43,6 +70,9 @@ statement([Id, Val], Stream) ->
 %%
 urn(Pred) ->
    uri:segments([scalar:s(Pred)], {urn, <<"es">>, <<>>}).
+
+urn(Pred, Key) ->
+   uri:segments([scalar:s(Pred), scalar:s(Key)], {urn, <<"es">>, <<>>}).
 
 %%
 %%
