@@ -1,0 +1,13 @@
+{application, elasticlog,
+   [
+      {description, "experimental data access to elastic search"},
+      {vsn,         "0.0.0"},
+      {modules,     []},
+      {registered,  []},
+      {applications,[
+         kernel
+        ,stdlib
+      ]},
+      {env, []}
+   ]
+}.  

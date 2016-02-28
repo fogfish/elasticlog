@@ -1,0 +1,4 @@
+# elasticlog
+
+Work In Progress
+
