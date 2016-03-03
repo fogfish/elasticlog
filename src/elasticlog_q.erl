@@ -17,64 +17,107 @@ sigma(Pattern) ->
 
 %%
 %%        
-sigma(Sock, #{'@' := Pred, '_' := [Key, Val] = Head} = Pattern) ->
-   % binary relation: subject --[p]--> object
+sigma(Sock, #{'@' := P, '_' := [S] = Head} = Pattern) ->
+   % binary relation: subject --[p]--> _
    case Pattern of
-      #{Key := K, Val := V} ->
-         statement(Head, stream_by_kv(Sock, Pred, K, V));
-      #{Key := K} when not is_list(K) ->
-         statement(Head, stream_by_k(Sock, Pred, K));
-      #{Val := V} ->
-         statement(Head, stream_by_v(Sock, Pred, V))
+      #{S := Sx} when not is_list(Sx) ->
+         statement(Head, stream_by_ps(Sock, P, Sx))
    end;
 
-sigma(Sock, #{'@' := Pred, '_' := [Key, Val, Crd] = Head} = Pattern) ->
+sigma(Sock, #{'@' := P, '_' := [S, O] = Head} = Pattern) ->
+   % binary relation: subject --[p]--> object
+   case Pattern of
+      #{S := Sx, O := Ox} ->
+         statement(Head, stream_by_pso(Sock, P, Sx, Ox));
+      #{S := Sx} when not is_list(Sx) ->
+         statement(Head, stream_by_ps(Sock, P, Sx));
+      #{O := Ox} ->
+         statement(Head, stream_by_po(Sock, P, Ox))
+   end;
+
+sigma(Sock, #{'@' := P, '_' := [S, O, C | _] = Head} = Pattern) ->
    % binary relation: subject --[p, c]--> object (augmented with credibility)
    case Pattern of
-      #{Key := K, Val := V, Crd := C} ->
-         statement(Head, filter(C, stream_by_kv(Sock, Pred, K, V)));
-      #{Key := K, Crd := C} when not is_list(K) ->
-         statement(Head, filter(C, stream_by_k(Sock, Pred, K)));
-      #{Val := V, Crd := C} ->
-         statement(Head, filter(C, stream_by_v(Sock, Pred, V)));
-      #{Key := K, Val := V} ->
-         statement(Head, stream_by_kv(Sock, Pred, K, V));
-      #{Key := K} when not is_list(K) ->
-         statement(Head, stream_by_k(Sock, Pred, K));
-      #{Val := V} ->
-         statement(Head, stream_by_v(Sock, Pred, V))
+      #{S := Sx, O := Ox, C := Cx} ->
+         statement(Head, filter(Cx, stream_by_pso(Sock, P, Sx, Ox)));
+      #{S := Sx, C := Cx} when not is_list(Sx) ->
+         statement(Head, filter(Cx, stream_by_ps(Sock, P, Sx)));
+      #{O := Ox, C := Cx} ->
+         statement(Head, filter(Cx, stream_by_po(Sock, P, Ox)));
+      #{S := Sx, O := Ox} ->
+         statement(Head, stream_by_pso(Sock, P, Sx, Ox));
+      #{S := Sx} when not is_list(Sx) ->
+         statement(Head, stream_by_ps(Sock, P, Sx));
+      #{O := Ox} ->
+         statement(Head, stream_by_po(Sock, P, Ox))
    end.
 
 %%
 %%
-stream_by_k(Sock, Pred, Key) ->
-   esio:match(Sock, urn(Pred), #{'_id' => Key}).
+stream_by_ps(Sock, P, S) ->
+   esio:match(Sock, urn(P), #{s => S}).
 
-stream_by_v(Sock, Pred, Val) ->
-   esio:match(Sock, urn(Pred), #{'o' => Val}).
+stream_by_po(Sock, P, O) ->
+   esio:match(Sock, urn(P), #{o => O}).
 
-stream_by_kv(Sock, Pred, Key, Val) ->
-   esio:match(Sock, urn(Pred), #{'_id' => Key, o => Val}).
+stream_by_pso(Sock, P, S, O) ->
+   esio:match(Sock, urn(P), #{s => S, o => O}).
 
 %%
 %%
-statement([Key, Val | _], Stream) ->
+statement([S, O], Stream) ->
    stream:map(
       fun(X) ->
          #{
-            Key => maps:get(<<"_id">>, X),
-            Val => maps:get(<<"o">>, maps:get(<<"_source">>, X))
+            S => maps:get(<<"s">>, maps:get(<<"_source">>, X)),
+            O => maps:get(<<"o">>, maps:get(<<"_source">>, X))
+         }
+      end,
+      Stream
+   );
+
+statement([S], Stream) ->
+   stream:map(
+      fun(X) ->
+         #{
+            S => maps:get(<<"s">>, maps:get(<<"_source">>, X))
+         }
+      end,
+      Stream
+   );
+
+statement([S, O, C], Stream) ->
+   stream:map(
+      fun(X) ->
+         #{
+            S => maps:get(<<"s">>, maps:get(<<"_source">>, X)),
+            O => maps:get(<<"o">>, maps:get(<<"_source">>, X)),
+            C => maps:get(<<"_score">>, X)
+         }
+      end,
+      Stream
+   );
+
+statement([S, O, C, K], Stream) ->
+   stream:map(
+      fun(X) ->
+         #{
+            S => maps:get(<<"s">>, maps:get(<<"_source">>, X)),
+            O => maps:get(<<"o">>, maps:get(<<"_source">>, X)),
+            C => maps:get(<<"_score">>, X),
+            K => maps:get(<<"_id">>, X)
          }
       end,
       Stream
    ).
 
+
 %%
 %%
-filter(Crd, Stream) ->
+filter(C, Stream) ->
    stream:takewhile(
       fun(X) -> 
-         maps:get(<<"_score">>, X) >= Crd 
+         maps:get(<<"_score">>, X) >= C
       end,
       Stream
    ).

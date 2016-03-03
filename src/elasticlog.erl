@@ -10,7 +10,6 @@
 c(Datalog) -> 
    datalog:c(elasticlog_q, datalog:p(Datalog)).
 
-
 %%
 %% declare horn clause using native query syntax
 %%  Example:
