@@ -76,9 +76,9 @@ Elog(Sock).
 #### `f(...)` pattern match 
 
 The predicate matches the knowledge statement and lift unbound variable. There are variants of predicate:
-* `p(S, P, O)` matches the knowledge statement (subject, predicate object) 
-* `p(S, P, O, C)` matches the knowledge statement and its credibility  
-* `p(S, P, O, C, K)` matches the knowledge statement, its credibility and K-order value 
+* `f(S, P, O)` matches the knowledge statement (subject, predicate object) 
+* `f(S, P, O, C)` matches the knowledge statement and its credibility  
+* `f(S, P, O, C, K)` matches the knowledge statement, its credibility and K-order value 
 
 
 #### `geo(...)` geohash match  
