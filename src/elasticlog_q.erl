@@ -1,3 +1,18 @@
+%%
+%%   Copyright 2016 Dmitry Kolesnikov, All Rights Reserved
+%%
+%%   Licensed under the Apache License, Version 2.0 (the "License");
+%%   you may not use this file except in compliance with the License.
+%%   You may obtain a copy of the License at
+%%
+%%       http://www.apache.org/licenses/LICENSE-2.0
+%%
+%%   Unless required by applicable law or agreed to in writing, software
+%%   distributed under the License is distributed on an "AS IS" BASIS,
+%%   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%%   See the License for the specific language governing permissions and
+%%   limitations under the License.
+%%
 %% @doc
 %%   datalog sigma function supports knowledge statement only.
 -module(elasticlog_q).
@@ -15,7 +30,7 @@ sigma(Pattern) ->
       end
    end. 
 
-sigma(Sock, #{'@' := p, '_' := [_, _, _, C] = Head} = Pattern) ->
+sigma(Sock, #{'@' := f, '_' := [_, _, _, C] = Head} = Pattern) ->
    Query  = q_build(Pattern),
    Filter = datalog:takewhile(C, Pattern),
    Stream = Filter(
@@ -24,7 +39,7 @@ sigma(Sock, #{'@' := p, '_' := [_, _, _, C] = Head} = Pattern) ->
    ),
    statement(Head, Stream);
 
-sigma(Sock, #{'@' := p, '_' := [_, _, _, C, _] = Head} = Pattern) ->
+sigma(Sock, #{'@' := f, '_' := [_, _, _, C, _] = Head} = Pattern) ->
    Query = q_build(Pattern),
    Filter = datalog:takewhile(C, Pattern),
    Stream = Filter(
@@ -33,12 +48,12 @@ sigma(Sock, #{'@' := p, '_' := [_, _, _, C, _] = Head} = Pattern) ->
    ),
    statement(Head, Stream);
 
-sigma(Sock, #{'@' := p, '_' := Head} = Pattern) ->
+sigma(Sock, #{'@' := f, '_' := Head} = Pattern) ->
    Query  = q_build(Pattern),
    Stream = esio:stream(Sock, {urn, <<"es">>, <<>>}, Query),
    statement(Head, Stream);
 
-sigma(Sock, #{'@' := geo, '_' := [S, P, O, R] = Head} = Pattern) ->
+sigma(Sock, #{'@' := geo, '_' := [S, P, O, R]} = Pattern) ->
    Query   = q_build(Pattern#{'_' => [S, P]}),
    Filter  = #{
       geohash_cell => #{
@@ -122,37 +137,6 @@ q_term('<')  -> lt;
 q_term('=<') -> lte.
 
 
-
-
-
-% sigma(Sock, #{'@' := geo, '_' := [S, P, O, Lat, Lng, R]} = Pattern) ->
-%    Query = #{
-%   'query' => #{
-%       filtered => #{
-%       'query' => #{
-%         bool => #{
-%           must => #{
-%             match => #{
-%               p => <<"urn:georss:point">>
-%             }
-%           }
-%         }
-%       },
-%       filter => #{
-%         geohash_cell => #{
-%           o => #{
-%             geohash => <<"ud9y21j3u76e">>
-%           },
-%           precision => <<"10km">>,
-%           neighbors => true
-%         }
-%       }
-%     }
-%   }
-% },
-%    statement([S, P, O], esio:stream(Sock, {urn, <<"es">>, <<"geohash">>}, Query)).
-
-
 %%
 %% return predicate schema (variable binding to keys) 
 schema([S, P]) ->
@@ -208,55 +192,3 @@ statement([S, P, O, C, K], Stream) ->
       end,
       Stream
    ).
-
-
-
-
-
-
-
-% %%
-% %% keep temporary for credibility filtering
-% sigma(Sock, #{'@' := P, '_' := [S] = Head} = Pattern) ->
-%    % binary relation: subject --[p]--> _
-%    case Pattern of
-%       #{S := Sx} when not is_list(Sx) ->
-%          statement(Head, stream_by_ps(Sock, P, Sx))
-%    end;
-
-% sigma(Sock, #{'@' := P, '_' := [S, O] = Head} = Pattern) ->
-%    % binary relation: subject --[p]--> object
-%    case Pattern of
-%       #{S := Sx, O := Ox} ->
-%          statement(Head, stream_by_pso(Sock, P, Sx, Ox));
-%       #{S := Sx} when not is_list(Sx) ->
-%          statement(Head, stream_by_ps(Sock, P, Sx));
-%       #{O := Ox} ->
-%          statement(Head, stream_by_po(Sock, P, Ox))
-%    end;
-
-% sigma(Sock, #{'@' := P, '_' := [S, O, C | _] = Head} = Pattern) ->
-%    % binary relation: subject --[p, c]--> object (augmented with credibility)
-%    case Pattern of
-%       #{S := Sx, O := Ox, C := Cx} ->
-%          statement(Head, filter(Cx, stream_by_pso(Sock, P, Sx, Ox)));
-%       #{S := Sx, C := Cx} when not is_list(Sx) ->
-%          statement(Head, filter(Cx, stream_by_ps(Sock, P, Sx)));
-%       #{O := Ox, C := Cx} ->
-%          statement(Head, filter(Cx, stream_by_po(Sock, P, Ox)));
-%       #{S := Sx, O := Ox} ->
-%          statement(Head, stream_by_pso(Sock, P, Sx, Ox));
-%       #{S := Sx} when not is_list(Sx) ->
-%          statement(Head, stream_by_ps(Sock, P, Sx));
-%       #{O := Ox} ->
-%          statement(Head, stream_by_po(Sock, P, Ox))
-%    end.
-
-
-
-
-
-% %%
-% %%
-% urn(Pred) ->
-%    uri:segments([scalar:s(Pred)], {urn, <<"es">>, <<>>}).

@@ -1,0 +1,3 @@
+# HowTo `elasticlog`
+
+tbd
