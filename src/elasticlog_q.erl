@@ -65,7 +65,10 @@ sigma(Sock, #{'@' := geo, '_' := [S, P, O, R]} = Pattern) ->
    Stream = esio:stream(Sock, {urn, <<"es">>, <<"geohash">>},
       #{'query' => #{filtered => Query#{filter => Filter}}}
    ),
-   statement([S, P, O], Stream).
+   statement([S, P, O], Stream);
+
+sigma(Sock, #{'@' := geo, '_' := [S, P, Lat, Lng, R]} = Pattern) ->
+   sigma(Sock, Pattern#{'_' => [S, P, hash:geo(Lat, Lng), R]}).
 
 value(X, Pattern)
  when is_atom(X) ->

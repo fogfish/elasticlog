@@ -85,6 +85,7 @@ The predicate matches the knowledge statement and lift unbound variable. There a
 
 The predicate matches the knowledge statement of geohash type (object is GeoHash) .
 * `geo(S, P, O, R)` matches the knowledge statement at given location (`O`) within the radius `R`
+* `geo(S, P, Lat, Lng, R)` matches the knowledge statement at given location (`Lat`, `Lng`) within the radius `R`
 
 
 ### More Information
