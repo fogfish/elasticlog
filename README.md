@@ -54,7 +54,7 @@ Dlog = elasticlog:c("nt(S, P, O) :- f(S, P, O), O = \"Example\".").
 
 %%
 %% evaluate program, using cluster connection
-Dlog(Sock).
+datalog:q(Dlog, Sock).
 
 
 %%

@@ -168,11 +168,12 @@ schema([S, P, O, _, K]) ->
 statement([S, P, O], Stream) ->
    stream:map(
       fun(X) ->
+         Type = maps:get(<<"_type">>, X),
          Json = maps:get(<<"_source">>, X),
          #{
             S => maps:get(<<"s">>, Json), 
             P => maps:get(<<"p">>, Json), 
-            O => maps:get(<<"o">>, Json)
+            O => maps:get(Type, Json)
          }
       end,
       Stream
@@ -181,11 +182,12 @@ statement([S, P, O], Stream) ->
 statement([S, P, O, C], Stream) ->
    stream:map(
       fun(X) ->
+         Type = maps:get(<<"_type">>, X),
          Json = maps:get(<<"_source">>, X),
          #{
             S => maps:get(<<"s">>, Json), 
             P => maps:get(<<"p">>, Json), 
-            O => maps:get(<<"o">>, Json),
+            O => maps:get(Type, Json),
             C => maps:get(<<"_score">>, X)
          }
       end,
@@ -195,11 +197,12 @@ statement([S, P, O, C], Stream) ->
 statement([S, P, O, C, K], Stream) ->
    stream:map(
       fun(X) ->
+         Type = maps:get(<<"_type">>, X),
          Json = maps:get(<<"_source">>, X),
          #{
             S => maps:get(<<"s">>, Json), 
             P => maps:get(<<"p">>, Json), 
-            O => maps:get(<<"o">>, Json),
+            O => maps:get(Type, Json),
             C => maps:get(<<"_score">>, X),
             K => maps:get(<<"k">>, Json)
          }
@@ -212,8 +215,9 @@ statement([S, P, O, C, K], Stream) ->
 geo_statement([S, P, Lat, Lng], Stream) ->
    stream:map(
       fun(X) ->
+         Type = maps:get(<<"_type">>, X),
          Json = maps:get(<<"_source">>, X),
-         {LatX, LngX} = hash:geo(maps:get(<<"o">>, Json)),
+         {LatX, LngX} = hash:geo(maps:get(Type, Json)),
          #{
             S => maps:get(<<"s">>, Json), 
             P => maps:get(<<"p">>, Json), 
