@@ -68,7 +68,18 @@ sigma(Sock, #{'@' := geo, '_' := [S, P, O, R]} = Pattern) ->
    statement([S, P, O], Stream);
 
 sigma(Sock, #{'@' := geo, '_' := [S, P, Lat, Lng, R]} = Pattern) ->
-   sigma(Sock, Pattern#{'_' => [S, P, hash:geo(Lat, Lng), R]}).
+   Query   = q_build(Pattern#{'_' => [S, P]}),
+   Filter  = #{
+      geohash_cell => #{
+         o => #{geohash => value(hash:geo(Lat, Lng), Pattern)},
+         precision => value(R, Pattern),
+         neighbors => true
+      }
+   },
+   Stream = esio:stream(Sock, {urn, <<"es">>, <<"geohash">>},
+      #{'query' => #{filtered => Query#{filter => Filter}}}
+   ),
+   geo_statement([S, P, Lat, Lng], Stream).
 
 value(X, Pattern)
  when is_atom(X) ->
@@ -195,3 +206,21 @@ statement([S, P, O, C, K], Stream) ->
       end,
       Stream
    ).
+
+%%
+%%
+geo_statement([S, P, Lat, Lng], Stream) ->
+   stream:map(
+      fun(X) ->
+         Json = maps:get(<<"_source">>, X),
+         {LatX, LngX} = hash:geo(maps:get(<<"o">>, Json)),
+         #{
+            S => maps:get(<<"s">>, Json), 
+            P => maps:get(<<"p">>, Json), 
+            Lat => LatX,
+            Lng => LngX 
+         }
+      end,
+      Stream
+   ).
+
