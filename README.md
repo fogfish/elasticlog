@@ -50,7 +50,7 @@ esio:start().
 
 %%
 %% compile query, using datalog program
-Dlog = elasticlog:c("nt(S, P, O) :- p(S, P, O), O = \"Example\".").
+Dlog = elasticlog:c("nt(S, P, O) :- f(S, P, O), O = \"Example\".").
 
 %%
 %% evaluate program, using cluster connection
