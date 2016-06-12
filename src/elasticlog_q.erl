@@ -57,7 +57,7 @@ sigma(Sock, #{'@' := geo, '_' := [S, P, O, R]} = Pattern) ->
    Query   = q_build(Pattern#{'_' => [S, P]}),
    Filter  = #{
       geohash_cell => #{
-         o => #{geohash => value(O, Pattern)},
+         geohash => #{geohash => value(O, Pattern)},
          precision => value(R, Pattern),
          neighbors => true
       }
@@ -71,7 +71,7 @@ sigma(Sock, #{'@' := geo, '_' := [S, P, Lat, Lng, R]} = Pattern) ->
    Query   = q_build(Pattern#{'_' => [S, P]}),
    Filter  = #{
       geohash_cell => #{
-         o => #{geohash => value(hash:geo(Lat, Lng), Pattern)},
+         geohash => #{geohash => hash:geo(value(Lat, Pattern), value(Lng, Pattern))},
          precision => value(R, Pattern),
          neighbors => true
       }
@@ -156,11 +156,17 @@ q_term('=<') -> lte.
 schema([S, P]) ->
    [{S, s}, {P, p}];
 schema([S, P, O]) ->
-   [{S, s}, {P, p}, {O, o}];
+   [{S, s}, {P, p}, {O, typeof(O)}];
 schema([S, P, O, _]) ->
-   [{S, s}, {P, p}, {O, o}];
+   [{S, s}, {P, p}, {O, typeof(O)}];
 schema([S, P, O, _, K]) ->
-   [{S, s}, {P, p}, {O, o}, {K, k}].
+   [{S, s}, {P, p}, {O, typeof(O)}, {K, k}].
+
+typeof(X) when is_integer(X) -> long;
+typeof(X) when is_float(X) -> double;
+typeof(<<"true">>) -> boolean;
+typeof(<<"false">>) -> boolean;
+typeof(X) when is_binary(X) -> string.
 
 
 %%
