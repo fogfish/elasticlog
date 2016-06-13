@@ -132,7 +132,7 @@ q_split(#{'_' := Head} = Pattern) ->
 q_bool(Pattern) ->
    #{'query' => 
       #{bool => 
-         #{must => [#{match => #{Key => Val}} || {Key, Val} <- Pattern]}
+         #{must => [#{match => #{typeof(Val) => Val}} || {Key, Val} <- Pattern]}
       }
    }.
 
@@ -156,11 +156,11 @@ q_term('=<') -> lte.
 schema([S, P]) ->
    [{S, s}, {P, p}];
 schema([S, P, O]) ->
-   [{S, s}, {P, p}, {O, typeof(O)}];
+   [{S, s}, {P, p}, {O, o}];
 schema([S, P, O, _]) ->
-   [{S, s}, {P, p}, {O, typeof(O)}];
+   [{S, s}, {P, p}, {O, o}];
 schema([S, P, O, _, K]) ->
-   [{S, s}, {P, p}, {O, typeof(O)}, {K, k}].
+   [{S, s}, {P, p}, {O, o}, {K, k}].
 
 typeof(X) when is_integer(X) -> long;
 typeof(X) when is_float(X) -> double;
