@@ -30,73 +30,33 @@ sigma(Pattern) ->
       end
    end. 
 
-sigma(Sock, #{'@' := f, '_' := [_, _, _, C] = Head} = Pattern) ->
-   Query  = q_build(Pattern),
-   Filter = datalog:takewhile(C, Pattern),
-   Stream = Filter(
-      fun(X) -> maps:get(<<"_score">>, X) end, 
-      esio:stream(Sock, {urn, <<"es">>, <<>>}, Query)
-   ),
-   statement(Head, Stream);
+sigma(Sock, #{'@' := Fun, '_' := Head} = Pattern) ->
+   statement(Fun, Head,
+      filter(Pattern,
+         stream(Sock, Pattern)
+      )
+   ).
 
-sigma(Sock, #{'@' := f, '_' := [_, _, _, C, _] = Head} = Pattern) ->
+%%
+%% build data stream from pattern
+stream(Sock, #{'@' := geo} = Pattern) ->
+   esio:stream(Sock, {urn, <<"es">>, <<"geohash">>}, q_build(Pattern));
+
+stream(Sock, Pattern) ->
    Query = q_build(Pattern),
-   Filter = datalog:takewhile(C, Pattern),
-   Stream = Filter(
-      fun(X) -> maps:get(<<"_score">>, X) end, 
-      esio:stream(Sock, {urn, <<"es">>, <<>>}, Query)
-   ),
-   statement(Head, Stream);
-
-sigma(Sock, #{'@' := f, '_' := Head} = Pattern) ->
-   Query  = q_build(Pattern),
-   Stream = esio:stream(Sock, {urn, <<"es">>, <<>>}, Query),
-   statement(Head, Stream);
-
-sigma(Sock, #{'@' := geo, '_' := [S, P, O, R]} = Pattern) ->
-   Query   = q_build(Pattern#{'_' => [S, P]}),
-   Filter  = #{
-      geohash_cell => #{
-         geohash => #{geohash => value(O, Pattern)},
-         precision => value(R, Pattern),
-         neighbors => true
-      }
-   },
-   Stream = esio:stream(Sock, {urn, <<"es">>, <<"geohash">>},
-      #{'query' => #{filtered => Query#{filter => Filter}}}
-   ),
-   statement([S, P, O], Stream);
-
-sigma(Sock, #{'@' := geo, '_' := [S, P, Lat, Lng, R]} = Pattern) ->
-   Query   = q_build(Pattern#{'_' => [S, P]}),
-   Filter  = #{
-      geohash_cell => #{
-         geohash => #{geohash => hash:geo(value(Lat, Pattern), value(Lng, Pattern))},
-         precision => value(R, Pattern),
-         neighbors => true
-      }
-   },
-   Stream = esio:stream(Sock, {urn, <<"es">>, <<"geohash">>},
-      #{'query' => #{filtered => Query#{filter => Filter}}}
-   ),
-   geo_statement([S, P, Lat, Lng], Stream).
-
-value(X, Pattern)
- when is_atom(X) ->
-   maps:get(X, Pattern);
-value(X, _Pattern) ->
-   X.
+   % io:format("~s~n", [jsx:encode(Query)]),
+   esio:stream(Sock, {urn, <<"es">>, <<>>}, Query).
 
 %%
 %% elastic search query builder
 q_build(Pattern) ->
-   case q_split(Pattern) of
-      {Pat, []} ->
-         q_bool(Pat);
-      {Pat, Filter} ->
-         Query = q_bool(Pat),
-         #{'query' => #{filtered => Query#{filter => q_filter(Filter)}}}
-   end.
+   {Match, Filter} = q_split(Pattern),
+   q_build(q_bool(Pattern, Match), q_filter(Pattern, Filter)).
+
+q_build(Matcher, undefined) ->
+   Matcher;
+q_build(Matcher, Filters) ->   
+   #{'query' => #{filtered => Matcher#{filter => Filters}}}.
 
 %%
 %% split query to pattern match and filters
@@ -126,30 +86,81 @@ q_split(#{'_' := Head} = Pattern) ->
       schema(Head)
    ).
 
-
 %%
 %% build boolean query
-q_bool(Pattern) ->
+q_bool(#{'@' := Fun}, Pattern) ->
    #{'query' => 
       #{bool => 
-         #{must => [#{match => #{typeof(Val) => Val}} || {Key, Val} <- Pattern]}
+         #{must => [#{match => #{q_typeof(Key, Fun) => Val}} || {Key, Val} <- Pattern]}
       }
    }.
 
 %%
-%%
-q_filter(Filter) ->
-   #{'and' => [q_filter(Key, Val) || {Key, Val} <- Filter]}.
+%% build filter restrictions
+q_filter(#{'@' := geo} = Pattern, _) ->
+   #{
+      geohash_cell => #{
+         geohash => #{geohash => q_filter_geo_hash(Pattern)},
+         precision => q_filter_geo_precision(Pattern),
+         neighbors => true
+      }
+   };
 
-q_filter(Field, Guard) ->
+q_filter(_, []) ->
+   undefined;
+q_filter(#{'@' := Fun}, Filters) ->
+   #{'and' => [q_filter_value(q_typeof(Key, Fun), Val) || {Key, Val} <- Filters]}.
+
+q_filter_value(Field, Guard) ->
    #{range => #{Field => maps:from_list([{q_term(Op), Val} || {Op, Val} <- Guard])}}.
 
+q_filter_geo_precision(#{'_' := [_, _, X]} = Pattern) ->
+   value(X, Pattern).
 
+q_filter_geo_hash(#{'_' := [_, _, _, Hash]} = Pattern) ->
+   value(Hash, Pattern);
+
+q_filter_geo_hash(#{'_' := [_, _, _, Lat, Lng]} = Pattern) ->
+   hash:geo(value(Lat, Pattern), value(Lng, Pattern)).
+
+
+%%
+%%
 q_term('>')  -> gt;
 q_term('>=') -> gte; 
 q_term('<')  -> lt;
 q_term('=<') -> lte.
 
+%%
+%%
+q_typeof(s, _) -> s;
+q_typeof(p, _) -> p;
+q_typeof(k, _) -> k;
+%% todo: alias
+q_typeof(o, Type) -> Type.
+
+
+%%
+%%
+filter(#{'@' := geo}, Stream) ->
+   Stream;
+filter(#{'_' := [_, _, _, C]} = Pattern, Stream) ->
+   Filter = datalog:takewhile(C, Pattern),
+   Filter(fun(X) -> maps:get(<<"_score">>, X) end, Stream);
+filter(#{'_' := [_, _, _, C, _]} = Pattern, Stream) ->
+   Filter = datalog:takewhile(C, Pattern),
+   Filter(fun(X) -> maps:get(<<"_score">>, X) end, Stream);
+filter(_, Stream) ->
+   Stream.
+
+
+%%
+%%
+value(X, Pattern)
+ when is_atom(X) ->
+   maps:get(X, Pattern);
+value(X, _Pattern) ->
+   X.
 
 %%
 %% return predicate schema (variable binding to keys) 
@@ -162,16 +173,25 @@ schema([S, P, O, _]) ->
 schema([S, P, O, _, K]) ->
    [{S, s}, {P, p}, {O, o}, {K, k}].
 
-typeof(X) when is_integer(X) -> long;
-typeof(X) when is_float(X) -> double;
-typeof(<<"true">>) -> boolean;
-typeof(<<"false">>) -> boolean;
-typeof(X) when is_binary(X) -> string.
-
-
 %%
 %% translate document to atomic statement
-statement([S, P, O], Stream) ->
+statement(geo, [S, P, Lat, Lng], Stream) ->
+   stream:map(
+      fun(X) ->
+         Type = maps:get(<<"_type">>, X),
+         Json = maps:get(<<"_source">>, X),
+         {LatX, LngX} = hash:geo(maps:get(Type, Json)),
+         #{
+            S => maps:get(<<"s">>, Json), 
+            P => maps:get(<<"p">>, Json), 
+            Lat => LatX,
+            Lng => LngX 
+         }
+      end,
+      Stream
+   );
+
+statement(_, [S, P, O], Stream) ->
    stream:map(
       fun(X) ->
          Type = maps:get(<<"_type">>, X),
@@ -185,7 +205,7 @@ statement([S, P, O], Stream) ->
       Stream
    );
 
-statement([S, P, O, C], Stream) ->
+statement(_, [S, P, O, C], Stream) ->
    stream:map(
       fun(X) ->
          Type = maps:get(<<"_type">>, X),
@@ -200,7 +220,7 @@ statement([S, P, O, C], Stream) ->
       Stream
    );
 
-statement([S, P, O, C, K], Stream) ->
+statement(_, [S, P, O, C, K], Stream) ->
    stream:map(
       fun(X) ->
          Type = maps:get(<<"_type">>, X),
@@ -215,22 +235,3 @@ statement([S, P, O, C, K], Stream) ->
       end,
       Stream
    ).
-
-%%
-%%
-geo_statement([S, P, Lat, Lng], Stream) ->
-   stream:map(
-      fun(X) ->
-         Type = maps:get(<<"_type">>, X),
-         Json = maps:get(<<"_source">>, X),
-         {LatX, LngX} = hash:geo(maps:get(Type, Json)),
-         #{
-            S => maps:get(<<"s">>, Json), 
-            P => maps:get(<<"p">>, Json), 
-            Lat => LatX,
-            Lng => LngX 
-         }
-      end,
-      Stream
-   ).
-
