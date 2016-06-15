@@ -40,7 +40,9 @@ sigma(Sock, #{'@' := Fun, '_' := Head} = Pattern) ->
 %%
 %% build data stream from pattern
 stream(Sock, #{'@' := geo} = Pattern) ->
-   esio:stream(Sock, {urn, <<"es">>, <<"geohash">>}, q_build(Pattern));
+   Query = q_build(Pattern),
+   % io:format("~s~n", [jsx:encode(Query)]),
+   esio:stream(Sock, {urn, <<"es">>, <<"geohash">>}, Query);
 
 stream(Sock, Pattern) ->
    Query = q_build(Pattern),
@@ -60,7 +62,7 @@ q_build(Matcher, Filters) ->
 
 %%
 %% split query to pattern match and filters
-q_split(#{'_' := Head} = Pattern) ->
+q_split(#{'@' := Fun, '_' := Head} = Pattern) ->
    lists:foldl(
       fun
       ({Pkey, Jkey}, {P, F} = Acc) when is_atom(Pkey) ->
@@ -83,7 +85,7 @@ q_split(#{'_' := Head} = Pattern) ->
          {[{Jkey, Pkey}|P], F}
       end,
       {[], []},
-      schema(Head)
+      schema(Fun, Head)
    ).
 
 %%
@@ -168,13 +170,15 @@ value(X, _Pattern) ->
 
 %%
 %% return predicate schema (variable binding to keys) 
-schema([S, P]) ->
+schema(geo, [S, P|_]) ->
    [{S, s}, {P, p}];
-schema([S, P, O]) ->
+schema(_, [S, P]) ->
+   [{S, s}, {P, p}];
+schema(_, [S, P, O]) ->
    [{S, s}, {P, p}, {O, o}];
-schema([S, P, O, _]) ->
+schema(_, [S, P, O, _]) ->
    [{S, s}, {P, p}, {O, o}];
-schema([S, P, O, _, K]) ->
+schema(_, [S, P, O, _, K]) ->
    [{S, s}, {P, p}, {O, o}, {K, k}].
 
 %%
