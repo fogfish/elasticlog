@@ -114,7 +114,7 @@ q_filter(#{'@' := Fun}, Filters) ->
 q_filter_value(Field, Guard) ->
    #{range => #{Field => maps:from_list([{q_term(Op), Val} || {Op, Val} <- Guard])}}.
 
-q_filter_geo_precision(#{'_' := [_, _, X]} = Pattern) ->
+q_filter_geo_precision(#{'_' := [_, _, X|_]} = Pattern) ->
    value(X, Pattern).
 
 q_filter_geo_hash(#{'_' := [_, _, _, Hash]} = Pattern) ->
