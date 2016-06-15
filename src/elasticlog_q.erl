@@ -137,6 +137,10 @@ q_typeof(s, _) -> s;
 q_typeof(p, _) -> p;
 q_typeof(k, _) -> k;
 %% todo: alias
+q_typeof(o, t) -> datetime;
+q_typeof(o, l) -> string;
+q_typeof(o, int) -> integer;
+q_typeof(o, bool) -> boolean;
 q_typeof(o, Type) -> Type.
 
 
