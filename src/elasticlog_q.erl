@@ -183,7 +183,7 @@ schema(_, [S, P, O, _, K]) ->
 
 %%
 %% translate document to atomic statement
-statement(geo, [S, P, Lat, Lng], Stream) ->
+statement(geo, [S, P, _, Lat, Lng], Stream) ->
    stream:map(
       fun(X) ->
          Type = maps:get(<<"_type">>, X),
