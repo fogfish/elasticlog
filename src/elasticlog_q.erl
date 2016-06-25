@@ -53,12 +53,15 @@ stream(Sock, Pattern) ->
 %% elastic search query builder
 q_build(Pattern) ->
    {Match, Filter} = q_split(Pattern),
-   q_build(q_bool(Pattern, Match), q_filter(Pattern, Filter)).
+   q_build(q_bool(Pattern, Match), q_filter(Pattern, Filter), q_sort(Pattern, Filter)).
 
-q_build(Matcher, undefined) ->
+q_build(Matcher, undefined, undefined) ->
    Matcher;
-q_build(Matcher, Filters) ->   
-   #{'query' => #{filtered => Matcher#{filter => Filters}}}.
+q_build(Matcher, Filters, undefined) ->   
+   #{'query' => #{filtered => Matcher#{filter => Filters}}};
+q_build(Matcher, Filters, Sort) ->   
+   #{'query' => #{filtered => Matcher#{filter => Filters}}, sort => Sort}.
+
 
 %%
 %% split query to pattern match and filters
@@ -124,6 +127,22 @@ q_filter_geo_hash(#{'_' := [_, _, _, Hash]} = Pattern) ->
 
 q_filter_geo_hash(#{'_' := [_, _, _, Lat, Lng]} = Pattern) ->
    hash:geo(value(Lat, Pattern), value(Lng, Pattern)).
+
+%%
+%%
+q_sort(#{'@' := geo} = Pattern, _) ->
+   #{
+      '_geo_distance' => #{
+         geohash => q_filter_geo_hash(Pattern),
+         order => asc,
+         unit => m,
+         distance_type => plane
+      }
+   };
+
+q_sort(_, _) ->
+   undefined.
+
 
 
 %%
