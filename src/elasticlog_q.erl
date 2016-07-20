@@ -137,14 +137,20 @@ q_filter_geo_hash(#{'_' := [_, _, _, Lat, Lng]} = Pattern) ->
 %%
 %%
 q_sort(#{'@' := geo} = Pattern, _) ->
-   #{
-      '_geo_distance' => #{
-         geohash => q_filter_geo_hash(Pattern),
-         order => asc,
-         unit => m,
-         distance_type => plane
+   % @todo: re-write it using proper functional concept
+   %        geo predicate might lift value to result
+   try
+      #{
+         '_geo_distance' => #{
+            geohash => q_filter_geo_hash(Pattern),
+            order => asc,
+            unit => m,
+            distance_type => plane
+         }
       }
-   };
+   catch _:_ ->
+      undefined
+   end;
 
 q_sort(_, _) ->
    undefined.
