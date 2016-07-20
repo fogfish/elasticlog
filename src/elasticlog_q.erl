@@ -103,13 +103,19 @@ q_bool(#{'@' := Fun}, Pattern) ->
 %%
 %% build filter restrictions
 q_filter(#{'@' := geo} = Pattern, _) ->
-   #{
-      geohash_cell => #{
-         geohash => #{geohash => q_filter_geo_hash(Pattern)},
-         precision => q_filter_geo_precision(Pattern),
-         neighbors => true
+   % @todo: re-write it using proper functional concept
+   %        geo predicate might lift value to result
+   try
+      #{
+         geohash_cell => #{
+            geohash => #{geohash => q_filter_geo_hash(Pattern)},
+            precision => q_filter_geo_precision(Pattern),
+            neighbors => true
+         }
       }
-   };
+   catch _:_ ->
+      undefined
+   end;
 
 q_filter(_, []) ->
    undefined;
