@@ -57,6 +57,8 @@ q_build(Pattern) ->
 
 q_build(Matcher, undefined, undefined) ->
    Matcher;
+q_build(Matcher, undefined, Sort) ->   
+   Matcher#{sort => Sort};
 q_build(Matcher, Filters, undefined) ->   
    #{'query' => #{filtered => Matcher#{filter => Filters}}};
 q_build(Matcher, Filters, Sort) ->   
@@ -153,7 +155,11 @@ q_sort(#{'@' := geo} = Pattern, _) ->
    end;
 
 q_sort(_, _) ->
-   undefined.
+   % explicitly sort using k-order value
+   [
+      #{'_score' => #{order => desc}},
+      #{k => #{order => desc}}
+   ].
 
 
 
