@@ -16,6 +16,7 @@
 %% @doc
 %%   datalog sigma function supports knowledge statement only.
 -module(elasticlog_q).
+-include_lib("semantic/include/semantic.hrl").
 
 -export([
    sigma/1
@@ -30,19 +31,74 @@ sigma(Pattern) ->
       end
    end. 
 
-sigma(Sock, #{'@' := Fun, '_' := Head} = Pattern) ->
-   statement(Fun, Head,
-      filter(Pattern,
-         stream(Sock, Pattern)
-      )
+sigma(Sock, #{'@' := IRI, '_' := Head} = Pattern) ->
+   Spec   = semantic:lookup(IRI),
+   Query  = elasticlog_q5x:build(Spec, Pattern),
+   Stream = esio:stream(Sock, {urn, <<"es">>, <<>>}, Query), 
+   heap(Spec, Head, Stream).
+
+
+heap(#rdf_seq{seq = Seq}, Head, Stream) ->
+   Spec = lists:zip(Seq, Head),
+   stream:map(
+      fun(#{<<"_source">> := Json}) ->
+         lists:foldl(
+            fun({#rdf_property{id = IRI}, Key}, Heap) ->
+               Heap#{Key => maps:get(to_json(IRI), Json)}
+            end,
+            #{},
+            Spec
+         )
+      end,
+      Stream
    ).
 
 %%
+%%
+to_json({iri, Prefix, Suffix}) ->
+   <<Prefix/binary, $:, Suffix/binary>>.
+
+
+   % stream:map(
+   %    fun(X) ->
+   %       Type = maps:get(<<"_type">>, X),
+   %       Json = maps:get(<<"_source">>, X),
+   %       #{
+   %          S => maps:get(<<"s">>, Json), 
+   %          P => maps:get(<<"p">>, Json), 
+   %          O => maps:get(Type, Json)
+   %       }
+   %    end,
+   %    Stream
+   % );
+
+
+
+
+
+   % io:format("==> ~s~n", [jsx:encode(Query)]),
+
+     
+
+   % io:format("==> ~p~n", [Stream]),
+   % % io:format("==> ~p~n", [jsx:encode(Query)]),
+
+   % stream:new().
+
+   % #rdf_seq{} = Seq = semantic:lookup(IRI),
+
+   % % statement(Fun, Head,
+   %    % filter(Pattern,
+   %       stream(Sock, Seq, Pattern)
+   %    % )
+   % % ).
+
+%%
 %% build data stream from pattern
-stream(Sock, #{'@' := geo} = Pattern) ->
-   Query = q_build(Pattern),
-   % io:format("~s~n", [jsx:encode(Query)]),
-   esio:stream(Sock, {urn, <<"es">>, <<"geohash">>}, Query);
+% stream(Sock, #{'@' := geo} = Pattern) ->
+%    Query = q_build(Pattern),
+%    % io:format("~s~n", [jsx:encode(Query)]),
+%    esio:stream(Sock, {urn, <<"es">>, <<"geohash">>}, Query);
 
 stream(Sock, Pattern) ->
    Query = q_build(Pattern),
@@ -280,3 +336,4 @@ statement(_, [S, P, O, C, K], Stream) ->
       end,
       Stream
    ).
+
