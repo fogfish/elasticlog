@@ -37,26 +37,24 @@ sigma(Sock, #{'@' := IRI, '_' := Head} = Pattern) ->
    Stream = esio:stream(Sock, Query), 
    heap(Spec, Head, Stream).
 
-
+%%
+%% convert stream head (json object) to dataloag heap
 heap(#rdf_seq{seq = Seq}, Head, Stream) ->
    Spec = lists:zip(Seq, Head),
    stream:map(
       fun(#{<<"_source">> := Json}) ->
-         lists:foldl(
-            fun({#rdf_property{id = IRI}, Key}, Heap) ->
-               case maps:get(to_json(IRI), Json, undefined) of
-                  undefined ->
-                     Heap;
-                  Value ->
-                     Heap#{Key => Value}
-               end
-            end,
-            #{},
-            Spec
-         )
+         lists:foldl(fun(X, Heap) -> json_to_heap(X, Heap, Json) end, #{}, Spec)   
       end,
       Stream
    ).
+
+json_to_heap({#rdf_property{id = IRI}, Key}, Heap, Json) ->
+   case maps:get(to_json(IRI), Json, undefined) of
+      undefined ->
+         Heap;
+      Value ->
+         Heap#{Key => Value}
+   end.
 
 %%
 %%
@@ -64,39 +62,6 @@ to_json({iri, Prefix, Suffix}) ->
    <<Prefix/binary, $:, Suffix/binary>>.
 
 
-   % stream:map(
-   %    fun(X) ->
-   %       Type = maps:get(<<"_type">>, X),
-   %       Json = maps:get(<<"_source">>, X),
-   %       #{
-   %          S => maps:get(<<"s">>, Json), 
-   %          P => maps:get(<<"p">>, Json), 
-   %          O => maps:get(Type, Json)
-   %       }
-   %    end,
-   %    Stream
-   % );
-
-
-
-
-
-   % io:format("==> ~s~n", [jsx:encode(Query)]),
-
-     
-
-   % io:format("==> ~p~n", [Stream]),
-   % % io:format("==> ~p~n", [jsx:encode(Query)]),
-
-   % stream:new().
-
-   % #rdf_seq{} = Seq = semantic:lookup(IRI),
-
-   % % statement(Fun, Head,
-   %    % filter(Pattern,
-   %       stream(Sock, Seq, Pattern)
-   %    % )
-   % % ).
 
 %%
 %% build data stream from pattern
