@@ -18,9 +18,24 @@
 -module(elasticlog).
 
 -export([
+   schema/1,
+   schema/2,
    c/1,
    horn/2
 ]).
+
+
+%%
+%% build schema for semantic data
+-spec schema([semantic:iri()]) -> #{}.
+-spec schema([semantic:iri()], [_]) -> #{}.
+
+schema(Spec) ->
+   schema(Spec, []).
+
+schema(Spec, Opts) ->
+   elasticlog_schema:new(Spec, Opts).
+
 
 %%
 %% compile textual query

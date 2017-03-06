@@ -6,8 +6,19 @@
 -include_lib("semantic/include/semantic.hrl").
 -compile({parse_transform, category}).
 
--export([build/2]).
+-export([
+   schema/1,
+   build/2
+]).
 
+%%
+%%
+schema(#rdf_property{}) ->
+   #{type => keyword}.
+
+
+%%
+%% build elastic search query from datalog predicate
 build(#rdf_seq{seq = Seq}, #{'_' := Head} = Pattern) ->
    Spec    = lists:zip(Seq, Head),
    Filters = q_filters( filters(Spec, Pattern) ),
@@ -26,6 +37,9 @@ filters([Head | Tail], Pattern) ->
 filters([], _) ->
    [].
 
+filter({_, '_'}, _) ->
+   %% blank variable
+   undefined;
 filter({#rdf_property{} = Spec, Heap}, Pattern)
  when is_atom(Heap) ->
    %% heap value is not defined, this is reference to heap
@@ -70,6 +84,9 @@ matches([Head | Tail], Pattern) ->
 matches([], _) ->
    [].
 
+%% @todo: rdf:langString
+match({_, '_'}, _) ->
+   undefined;
 match({#rdf_property{datatype = {iri, ?LANG, _}} = Spec, Heap}, Pattern)
  when is_atom(Heap) ->
    %% heap value is not defined, this is reference to heap

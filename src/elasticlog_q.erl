@@ -34,7 +34,7 @@ sigma(Pattern) ->
 sigma(Sock, #{'@' := IRI, '_' := Head} = Pattern) ->
    Spec   = semantic:lookup(IRI),
    Query  = elasticlog_q5x:build(Spec, Pattern),
-   Stream = esio:stream(Sock, {urn, <<"es">>, <<>>}, Query), 
+   Stream = esio:stream(Sock, Query), 
    heap(Spec, Head, Stream).
 
 
@@ -44,7 +44,12 @@ heap(#rdf_seq{seq = Seq}, Head, Stream) ->
       fun(#{<<"_source">> := Json}) ->
          lists:foldl(
             fun({#rdf_property{id = IRI}, Key}, Heap) ->
-               Heap#{Key => maps:get(to_json(IRI), Json)}
+               case maps:get(to_json(IRI), Json, undefined) of
+                  undefined ->
+                     Heap;
+                  Value ->
+                     Heap#{Key => Value}
+               end
             end,
             #{},
             Spec
