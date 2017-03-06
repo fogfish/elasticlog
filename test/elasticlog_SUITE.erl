@@ -29,8 +29,8 @@
 ]).
 
 -export([
-   lookup_by_rdf_id/1,
-   lookup_by_lang_string/1
+   rdf_id/1,
+   rdf_lang_string/1
 ]).
 
 %%
@@ -50,7 +50,7 @@ all() ->
 groups() ->
    [
       {interface, [parallel], 
-         [lookup_by_rdf_id, lookup_by_lang_string]}
+         [rdf_id, rdf_lang_string]}
    ].
 
 %%%----------------------------------------------------------------------------   
@@ -83,7 +83,7 @@ end_per_group(_, _Config) ->
 %%%----------------------------------------------------------------------------   
 
 %%
-lookup_by_rdf_id(_Config) ->
+rdf_id(_Config) ->
    #{
       '@type'     := test,
       'rdf:id'    := <<"person:149">>,
@@ -91,7 +91,7 @@ lookup_by_rdf_id(_Config) ->
    } = eval("test(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name, _, _), rdf:id = \"person:149\" . ").
 
 %%
-lookup_by_lang_string(_Config) ->
+rdf_lang_string(_Config) ->
    #{
       '@type'     := test,
       'rdf:id'    := <<"person:137">>,
