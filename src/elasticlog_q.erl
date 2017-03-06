@@ -38,7 +38,7 @@ sigma(Sock, #{'@' := IRI, '_' := Head} = Pattern) ->
    heap(Spec, Head, Stream).
 
 %%
-%% convert stream head (json object) to dataloag heap
+%% convert stream head (json object) to datalog heap
 heap(#rdf_seq{seq = Seq}, Head, Stream) ->
    Spec = lists:zip(Seq, Head),
    stream:map(

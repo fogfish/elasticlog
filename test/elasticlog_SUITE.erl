@@ -29,7 +29,8 @@
 ]).
 
 -export([
-   person_by_id/1
+   lookup_by_rdf_id/1,
+   lookup_by_lang_string/1
 ]).
 
 %%
@@ -49,7 +50,7 @@ all() ->
 groups() ->
    [
       {interface, [parallel], 
-         [person_by_id]}
+         [lookup_by_rdf_id, lookup_by_lang_string]}
    ].
 
 %%%----------------------------------------------------------------------------   
@@ -81,16 +82,22 @@ end_per_group(_, _Config) ->
 %%%
 %%%----------------------------------------------------------------------------   
 
-person_by_id(_Config) ->
-   {ok, Sock} = esio:socket(?ELASTIC),
-   Query  = elasticlog:c("test(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name, _, _), rdf:id = \"person:149\" . "),
-   Stream = (Query(#{}))(Sock),
+%%
+lookup_by_rdf_id(_Config) ->
    #{
-      '@type'  := test,
-      'rdf:id' := <<"person:149">>,
+      '@type'     := test,
+      'rdf:id'    := <<"person:149">>,
       'foaf:name' := <<"Sophie Marceau">>
-   } = stream:head(Stream),
-   esio:close(Sock).
+   } = eval("test(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name, _, _), rdf:id = \"person:149\" . ").
+
+%%
+lookup_by_lang_string(_Config) ->
+   #{
+      '@type'     := test,
+      'rdf:id'    := <<"person:137">>,
+      'foaf:name' := <<"Ridley Scott">>,
+      'foaf:birthday' := <<"1937-11-30">>
+   } = eval("test(rdf:id, foaf:name, foaf:birthday) :- foaf:person(rdf:id, foaf:name, foaf:birthday, _), foaf:name = \"Ridley Scott\" . ").
 
 
 
@@ -154,3 +161,13 @@ publish_to_elastic(Json) ->
       end,
       Json
    ).
+
+%%
+%%
+eval(Datalog) ->
+   {ok, Sock} = esio:socket(?ELASTIC),
+   Query  = elasticlog:c(Datalog),
+   Stream = (Query(#{}))(Sock),
+   esio:close(Sock),
+   stream:head(Stream).
+
