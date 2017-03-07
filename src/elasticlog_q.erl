@@ -25,22 +25,24 @@
 %%
 %% build sigma function
 sigma(Pattern) ->
-   fun(Heap) ->
-      fun(Sock) ->
-         sigma(Sock, datalog:bind(Heap, Pattern))
+   fun(Sock) ->
+      fun(Stream) ->
+         sigma(Sock, datalog:bind(stream:head(Stream), Pattern))
       end
    end. 
 
 sigma(Sock, #{'@' := IRI, '_' := Head} = Pattern) ->
    Spec   = semantic:lookup(IRI),
    Query  = elasticlog_q5x:build(Spec, Pattern),
+   io:format("==> ~s~n", [jsx:encode(Query)]),
    Stream = esio:stream(Sock, Query), 
+   io:format("==> ~p~n", [Stream]),
    heap(Spec, Head, Stream).
 
 %%
 %% convert stream head (json object) to datalog heap
 heap(#rdf_seq{seq = Seq}, Head, Stream) ->
-   Spec = lists:zip(Seq, Head),
+   Spec = lists:filter(fun({_, H}) -> H /= '_' end, lists:zip(Seq, Head)),
    stream:map(
       fun(#{<<"_source">> := Json}) ->
          lists:foldl(fun(X, Heap) -> json_to_heap(X, Heap, Json) end, #{}, Spec)   

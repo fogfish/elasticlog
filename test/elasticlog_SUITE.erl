@@ -30,7 +30,8 @@
 
 -export([
    rdf_id/1,
-   rdf_lang_string/1
+   rdf_lang_string/1,
+   imdb_actor_of/1
 ]).
 
 %%
@@ -50,7 +51,7 @@ all() ->
 groups() ->
    [
       {interface, [parallel], 
-         [rdf_id, rdf_lang_string]}
+         [rdf_id, rdf_lang_string, imdb_actor_of]}
    ].
 
 %%%----------------------------------------------------------------------------   
@@ -61,8 +62,8 @@ groups() ->
 init_per_suite(Config) ->
    {ok, _} = application:ensure_all_started(elasticlog),
    ok = define_semantic(Config),
-   ok = create_database(Config),
-   ok = upload_database(Config),
+   % ok = create_database(Config),
+   % ok = upload_database(Config),
    Config.
 
 end_per_suite(_Config) ->
@@ -84,22 +85,30 @@ end_per_group(_, _Config) ->
 
 %%
 rdf_id(_Config) ->
-   #{
+   [#{
       '@type'     := test,
       'rdf:id'    := <<"person:149">>,
       'foaf:name' := <<"Sophie Marceau">>
-   } = eval("test(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name, _, _), rdf:id = \"person:149\" . ").
+   }] = eval("test(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name, _, _), rdf:id = \"person:149\" .").
 
 %%
 rdf_lang_string(_Config) ->
-   #{
+   [#{
       '@type'     := test,
       'rdf:id'    := <<"person:137">>,
       'foaf:name' := <<"Ridley Scott">>,
       'foaf:birthday' := <<"1937-11-30">>
-   } = eval("test(rdf:id, foaf:name, foaf:birthday) :- foaf:person(rdf:id, foaf:name, foaf:birthday, _), foaf:name = \"Ridley Scott\" . ").
+   }] = eval("test(rdf:id, foaf:name, foaf:birthday) :- foaf:person(rdf:id, foaf:name, foaf:birthday, _), foaf:name = \"Ridley Scott\" .").
 
 
+%%
+%%
+imdb_actor_of(_Config) ->
+   [
+      #{'@type' := rel, 'foaf:name' := <<"Mel Gibson">>},
+      #{'@type' := rel, 'foaf:name' := <<"Danny Glover">>},
+      #{'@type' := rel, 'foaf:name' := <<"Gary Busey">>}
+   ] = eval("rel(foaf:name) :- imdb:movie(_, dc:title, _, _, imdb:cast, _), foaf:person(imdb:cast, foaf:name, _, _), dc:title = \"Lethal Weapon\" .").
 
 %%%----------------------------------------------------------------------------   
 %%%
@@ -167,7 +176,7 @@ publish_to_elastic(Json) ->
 eval(Datalog) ->
    {ok, Sock} = esio:socket(?ELASTIC),
    Query  = elasticlog:c(Datalog),
-   Stream = (Query(#{}))(Sock),
+   Stream = stream:list((Query(#{}))(Sock)),
    esio:close(Sock),
-   stream:head(Stream).
+   Stream.
 
