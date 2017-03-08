@@ -2,6 +2,7 @@
 
 [Datalog](https://en.wikipedia.org/wiki/Datalog) query support for Elastic Search using the [parser](https://github.com/fogfish/datalog) implemented on Erlang.
 
+[![Build Status](https://secure.travis-ci.org/fogfish/elasticlog.svg?branch=master)](http://travis-ci.org/fogfish/elasticlog)
 
 ## Inspiration 
 

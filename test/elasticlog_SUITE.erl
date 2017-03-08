@@ -62,8 +62,8 @@ groups() ->
 init_per_suite(Config) ->
    {ok, _} = application:ensure_all_started(elasticlog),
    ok = define_semantic(Config),
-   % ok = create_database(Config),
-   % ok = upload_database(Config),
+   ok = create_database(Config),
+   ok = upload_database(Config),
    Config.
 
 end_per_suite(_Config) ->
@@ -86,7 +86,6 @@ end_per_group(_, _Config) ->
 %%
 rdf_id(_Config) ->
    [#{
-      '@type'     := test,
       'rdf:id'    := <<"person:149">>,
       'foaf:name' := <<"Sophie Marceau">>
    }] = eval("test(rdf:id, foaf:name) :- foaf:person(rdf:id, foaf:name, _, _), rdf:id = \"person:149\" .").
@@ -94,7 +93,6 @@ rdf_id(_Config) ->
 %%
 rdf_lang_string(_Config) ->
    [#{
-      '@type'     := test,
       'rdf:id'    := <<"person:137">>,
       'foaf:name' := <<"Ridley Scott">>,
       'foaf:birthday' := <<"1937-11-30">>
@@ -105,10 +103,10 @@ rdf_lang_string(_Config) ->
 %%
 imdb_actor_of(_Config) ->
    [
-      #{'@type' := rel, 'foaf:name' := <<"Mel Gibson">>},
-      #{'@type' := rel, 'foaf:name' := <<"Danny Glover">>},
-      #{'@type' := rel, 'foaf:name' := <<"Gary Busey">>}
-   ] = eval("rel(foaf:name) :- imdb:movie(_, dc:title, _, _, imdb:cast, _), foaf:person(imdb:cast, foaf:name, _, _), dc:title = \"Lethal Weapon\" .").
+      #{'foaf:name' := <<"Mel Gibson">>},
+      #{'foaf:name' := <<"Danny Glover">>},
+      #{'foaf:name' := <<"Gary Busey">>}
+   ] = eval("rel(foaf:name) :- imdb:movie(_, dc:title, _, _, imdb:cast, _), .flat(imdb:cast), foaf:person(imdb:cast, foaf:name, _, _), dc:title = \"Lethal Weapon\" .").
 
 %%%----------------------------------------------------------------------------   
 %%%
@@ -176,7 +174,7 @@ publish_to_elastic(Json) ->
 eval(Datalog) ->
    {ok, Sock} = esio:socket(?ELASTIC),
    Query  = elasticlog:c(Datalog),
-   Stream = stream:list((Query(#{}))(Sock)),
+   Stream = stream:list(datalog:q(Query, Sock)),
    esio:close(Sock),
    Stream.
 
