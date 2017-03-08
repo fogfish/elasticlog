@@ -65,6 +65,8 @@ init_per_suite(Config) ->
    ok = define_semantic(Config),
    ok = create_database(Config),
    ok = upload_database(Config),
+   %% let's wait when index is refreshed
+   timer:sleep(5000),
    Config.
 
 end_per_suite(_Config) ->
