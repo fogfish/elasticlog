@@ -4,6 +4,7 @@
 
 [![Build Status](https://secure.travis-ci.org/fogfish/elasticlog.svg?branch=master)](http://travis-ci.org/fogfish/elasticlog)
 
+
 ## Inspiration 
 
 Declarative logic programs is an alternative approach to extract knowledge facts in deductive databases. It is designed for applications that uses a large number of ground facts persisted in external storage. The library implements experimental support of datalog language to query knowledge facts stored in Elastic Search using [elasticnt](https://github.com/fogfish/elasticnt) library.
