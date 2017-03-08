@@ -61,6 +61,7 @@ groups() ->
 %%%----------------------------------------------------------------------------   
 init_per_suite(Config) ->
    {ok, _} = application:ensure_all_started(elasticlog),
+   lager:set_loglevel(lager_console_backend, debug),
    ok = define_semantic(Config),
    ok = create_database(Config),
    ok = upload_database(Config),
