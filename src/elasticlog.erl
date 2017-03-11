@@ -17,6 +17,7 @@
 %%   elastic search datalog
 -module(elasticlog).
 
+-export([start/0]).
 -export([
    schema/1,
    schema/2,
@@ -24,6 +25,10 @@
    horn/2
 ]).
 
+%%
+%%
+start() ->
+   application:ensure_all_started(elasticlog).
 
 %%
 %% build schema for semantic data
