@@ -13,6 +13,22 @@
 
 %%
 %%
+schema(#rdf_property{datatype = ?XSD_ANYURI}) ->
+   #{type => keyword};
+schema(#rdf_property{datatype = ?XSD_STRING}) ->
+   #{type => keyword};
+schema(#rdf_property{datatype = ?RDF_LANG_STRING}) ->
+   #{type => string};
+schema(#rdf_property{datatype = ?XSD_INTEGER}) ->
+   #{type => long};
+schema(#rdf_property{datatype = ?XSD_DECIMAL}) ->
+   #{type => double};
+schema(#rdf_property{datatype = ?XSD_BOOLEAN}) ->
+   #{type => boolean};
+schema(#rdf_property{datatype = ?XSD_DATETIME}) ->
+   #{type => date, format => strict_date_optional_time};
+schema(#rdf_property{datatype = ?GEORSS_HASH}) ->
+   #{type => geo_point};
 schema(#rdf_property{}) ->
    #{type => keyword}.
 
@@ -21,9 +37,28 @@ schema(#rdf_property{}) ->
 %% build elastic search query from datalog predicate
 build(#rdf_seq{seq = Seq}, #{'_' := Head} = Pattern) ->
    Spec    = lists:zip(Seq, Head),
-   Filters = q_filters( filters(Spec, Pattern) ),
-   Matches = q_matches( matches(Spec, Pattern) ),
+   Filters = [$.|| as_filters(Spec), filters(_, Pattern), q_filters(_)],
+   Matches = [$.|| as_matches(Spec), matches(_, Pattern), q_matches(_)],
    #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
+
+%%
+%%
+as_filters(List) ->
+   lists:filter(
+      fun({#rdf_property{datatype = {iri, Type, Schema}}, _}) ->
+         not (Type =:= ?LANG orelse Schema =:= ?LANG)
+      end,
+      List
+   ).
+
+as_matches(List) ->
+   lists:filter(
+      fun({#rdf_property{datatype = {iri, Type, Schema}}, _}) ->
+         (Type =:= ?LANG orelse Schema =:= ?LANG)
+      end,
+      List
+   ).
+ 
 
 %%
 %%
@@ -65,6 +100,12 @@ filter({#rdf_property{} = Spec, Value}, _) ->
 q_filters(Spec) ->
    lists:map(fun q_filter/1, Spec).
 
+q_filter({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, Radius]}) ->
+   #{geo_distance => #{distance => Radius, to_json(IRI) => GeoHash}};
+
+q_filter({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, Inner, Radius]}) ->
+   #{geo_distance_range => #{from => Inner, to => Radius, to_json(IRI) => GeoHash}};
+
 q_filter({range, #rdf_property{id = IRI}, Value}) ->
    #{range => #{to_json(IRI) => maps:from_list([{q_guard(Guard), X} || {Guard, X} <- Value])}};
 
@@ -87,7 +128,7 @@ matches([], _) ->
 %% @todo: rdf:langString
 match({_, '_'}, _) ->
    undefined;
-match({#rdf_property{datatype = {iri, ?LANG, _}} = Spec, Heap}, Pattern)
+match({#rdf_property{} = Spec, Heap}, Pattern)
  when is_atom(Heap) ->
    %% heap value is not defined, this is reference to heap
    case Pattern of
@@ -100,7 +141,7 @@ match({#rdf_property{datatype = {iri, ?LANG, _}} = Spec, Heap}, Pattern)
          undefined
    end;
 
-match({#rdf_property{datatype = {iri, ?LANG, _}} = Spec, Value}, _) ->
+match({#rdf_property{} = Spec, Value}, _) ->
    {terms, Spec, [Value]};
 
 match(_, _) ->

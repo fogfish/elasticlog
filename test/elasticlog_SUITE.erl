@@ -106,11 +106,13 @@ rdf_lang_string(_Config) ->
 %%
 %%
 imdb_actor_of(_Config) ->
+   %% note query matches: all Lethal Weapon sequels
    [
       #{'foaf:name' := <<"Mel Gibson">>},
       #{'foaf:name' := <<"Danny Glover">>},
+      #{'foaf:name' := <<"Joe Pesci">>},
       #{'foaf:name' := <<"Gary Busey">>}
-   ] = eval("rel(foaf:name) :- imdb:movie(_, dc:title, _, _, imdb:cast, _), .flat(imdb:cast), foaf:person(imdb:cast, foaf:name, _, _), dc:title = \"Lethal Weapon\" .").
+   ] = eval("rel(foaf:name) :- imdb:movie(_, dc:title, _, _, imdb:cast, _), .flat(imdb:cast), .unique(imdb:cast), foaf:person(imdb:cast, foaf:name, _, _), dc:title = \"Lethal Weapon\" .").
 
 %%%----------------------------------------------------------------------------   
 %%%
@@ -121,8 +123,6 @@ imdb_actor_of(_Config) ->
 %%
 %%
 define_semantic(_Config) ->
-   semantic:create(semantic:p("rdf:id", "xsd:string")),  %% @todo: reference
-
    semantic:create(semantic:p("foaf:name", "rdf:langString")),
    semantic:create(semantic:p("foaf:birthday", "xsd:string")),
    semantic:create(semantic:p("foaf:deathday", "xsd:string")),
@@ -131,9 +131,9 @@ define_semantic(_Config) ->
 
    semantic:create(semantic:p("dc:title", "rdf:langString")),
    semantic:create(semantic:p("imdb:year", "xsd:integer")),
-   semantic:create(semantic:p("imdb:director", "xsd:string")), %% @todo: reference
-   semantic:create(semantic:p("imdb:cast", "xsd:string")), %% @todo: reference
-   semantic:create(semantic:p("imdb:sequel", "xsd:string")), %% @todo: reference
+   semantic:create(semantic:p("imdb:director", "xsd:anyURI")),
+   semantic:create(semantic:p("imdb:cast", "xsd:anyURI")),
+   semantic:create(semantic:p("imdb:sequel", "xsd:anyURI")),
    semantic:create(semantic:seq("imdb:movie", 
       ["rdf:id", "dc:title", "imdb:year", "imdb:director", "imdb:cast", "imdb:sequel"])),
    ok.
@@ -142,7 +142,7 @@ define_semantic(_Config) ->
 %%
 create_database(Config) ->
    {ok, Sock} = esio:socket(?ELASTIC),
-   ok = esio:put(Sock, {urn, undefined, <<>>}, elasticlog:schema(["foaf:person", "imdb:movie"])),
+   esio:put(Sock, {urn, undefined, <<>>}, elasticlog:schema(["foaf:person", "imdb:movie"])),
    ok.
 
 
