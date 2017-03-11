@@ -36,6 +36,7 @@
 
 %%
 %% docker run -it -p 9200:9200 elasticsearch
+% -define(SERVICE, "http://localhost:9200").
 -define(ELASTIC, "http://localhost:9200/elasticlog").
 
 %%%----------------------------------------------------------------------------   
@@ -141,7 +142,7 @@ define_semantic(_Config) ->
 %%
 create_database(Config) ->
    {ok, Sock} = esio:socket(?ELASTIC),
-   esio:put(Sock, undefined, elasticlog:schema(["foaf:person", "imdb:movie"])),
+   ok = esio:put(Sock, {urn, undefined, <<>>}, elasticlog:schema(["foaf:person", "imdb:movie"])),
    ok.
 
 
@@ -167,7 +168,7 @@ publish_to_elastic(Json) ->
       fun(X) ->
          Id   = lens:get(lens:pair(<<"rdf:id">>), X),
          Type = lens:get(lens:pair(<<"rdf:type">>), X),
-         {ok, _} = esio:put(Sock, {Type, Id}, maps:from_list(X))
+         {ok, _} = esio:put(Sock, {urn, Type, Id}, maps:from_list(X))
       end,
       Json
    ).
