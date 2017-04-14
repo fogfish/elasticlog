@@ -151,7 +151,7 @@ datatype(Type, Key, Value, Query) ->
 
    %% define schema for given data type
    semantic:create(semantic:p(Key, Type)),
-   semantic:create(semantic:seq(Type, [?RDF_ID, Key])),
+   semantic:create(semantic:seq(Type, Type, [?RDF_ID, Key])),
    ok = esio:put(Sock, {urn, <<"_mappings">>, Type}, elasticlog:schema([Type], [type])),
 
    %% define test data

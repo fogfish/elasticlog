@@ -32,9 +32,9 @@ sigma(Pattern) ->
    end. 
 
 sigma(Sock, #{'@' := IRI, '_' := Head} = Pattern) ->
-   Spec   = semantic:lookup(IRI),
+   #rdf_seq{subclass = SubClass} = Spec = semantic:lookup(IRI),
    Query  = elasticlog_q5x:build(Spec, Pattern),
-   Stream = esio:stream(Sock, Query), 
+   Stream = esio:stream(Sock, to_json(SubClass), Query), 
    heap(Spec, Head, Stream).
 
 %%

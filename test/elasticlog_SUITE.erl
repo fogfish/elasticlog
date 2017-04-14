@@ -126,7 +126,7 @@ define_semantic(_Config) ->
    semantic:create(semantic:p("foaf:name", "rdf:langString")),
    semantic:create(semantic:p("foaf:birthday", "xsd:string")),
    semantic:create(semantic:p("foaf:deathday", "xsd:string")),
-   semantic:create(semantic:seq("foaf:person", 
+   semantic:create(semantic:seq("foaf:person", "foaf:person",
       ["rdf:id", "foaf:name", "foaf:birthday", "foaf:deathday"])),
 
    semantic:create(semantic:p("dc:title", "rdf:langString")),
@@ -134,7 +134,7 @@ define_semantic(_Config) ->
    semantic:create(semantic:p("imdb:director", "xsd:anyURI")),
    semantic:create(semantic:p("imdb:cast", "xsd:anyURI")),
    semantic:create(semantic:p("imdb:sequel", "xsd:anyURI")),
-   semantic:create(semantic:seq("imdb:movie", 
+   semantic:create(semantic:seq("imdb:movie", "imdb:movie", 
       ["rdf:id", "dc:title", "imdb:year", "imdb:director", "imdb:cast", "imdb:sequel"])),
    ok.
 
