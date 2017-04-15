@@ -44,8 +44,12 @@ schema(Spec, Opts) ->
 
 %%
 %% compile textual query
-c(Datalog) -> 
-   datalog:c(elasticlog_q, datalog:p(Datalog)).
+c(Datalog)
+ when is_map(Datalog) ->
+   datalog:c(elasticlog_q, Datalog);
+c(Datalog)
+ when is_list(Datalog) ->
+   c(datalog:p(Datalog)).
 
 %%
 %% declare horn clause using native query syntax
@@ -57,4 +61,4 @@ c(Datalog) ->
 %%       ])
 %%    ).
 horn(Head, List) ->
-   datalog:horn(Head, [elasticlog_q:sigma(X) || X <- List]).
+   datalog:c(elasticlog_q, #{q => [Head | List]}).
