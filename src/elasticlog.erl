@@ -81,6 +81,8 @@ encode(#{<<"@id">> := Id} = Json0) ->
 
 decode(#{<<"rdf:id">> := Id} = Json0) ->
    Json1 = maps:remove(<<"rdf:id">>, Json0),
-   Json1#{<<"@id">> => Id}.
+   Json1#{<<"@id">> => Id};
 
+decode(#{<<"@id">> := _} = Json) ->
+   Json.
 
