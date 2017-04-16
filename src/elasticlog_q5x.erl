@@ -103,8 +103,9 @@ q_filters(Spec) ->
 q_filter({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, Radius]}) ->
    #{geo_distance => #{distance => Radius, to_json(IRI) => GeoHash}};
 
-q_filter({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, Inner, Radius]}) ->
-   #{geo_distance_range => #{from => Inner, to => Radius, to_json(IRI) => GeoHash}};
+% [geo_distance_range] queries are no longer supported for geo_point field types
+% q_filter({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, Inner, Radius]}) ->
+%    #{geo_distance_range => #{from => Inner, to => Radius, to_json(IRI) => GeoHash}};
 
 q_filter({range, #rdf_property{id = IRI}, Value}) ->
    #{range => #{to_json(IRI) => maps:from_list([{q_guard(Guard), X} || {Guard, X} <- Value])}};
