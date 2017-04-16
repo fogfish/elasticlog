@@ -17,12 +17,16 @@
 %%   elastic search datalog
 -module(elasticlog).
 
+-compile({parse_transform, category}).
+
 -export([start/0]).
 -export([
    schema/1,
    schema/2,
    c/1,
-   horn/2
+   horn/2,
+   encode/1,
+   decode/1
 ]).
 
 %%
@@ -62,3 +66,21 @@ c(Datalog)
 %%    ).
 horn(Head, List) ->
    datalog:c(elasticlog_q, #{q => [Head | List]}).
+
+%%
+%% 
+-spec encode(_) -> _.
+
+encode(#{<<"@id">> := Id} = Json0) ->
+   Json1 = maps:remove(<<"@id">>, Json0),
+   Json1#{<<"rdf:id">> => Id}.
+   
+%%
+%%
+-spec decode(_) -> _.
+
+decode(#{<<"rdf:id">> := Id} = Json0) ->
+   Json1 = maps:remove(<<"rdf:id">>, Json0),
+   Json1#{<<"@id">> => Id}.
+
+
