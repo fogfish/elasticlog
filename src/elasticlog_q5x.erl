@@ -146,7 +146,13 @@ q_function({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, C
          offset => Circle,
          scale  => Radius
       }
-   }}.
+   }};
+
+q_function({terms, #rdf_property{id = IRI}, Value}) ->
+   #{
+      filter => #{terms => #{to_json(IRI) => [Value]}},
+      weight => 100
+   }.
 
 %%
 %%
