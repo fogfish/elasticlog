@@ -35,6 +35,13 @@ schema(#rdf_property{}) ->
 
 %%
 %% build elastic search query from datalog predicate
+%%  - functional score query
+%%  - match / filter boolean query
+build(#rdf_seq{seq = Seq}, #{'_' := ['elastic:fsq' | Head]} = Pattern) ->
+   Spec    = lists:zip(Seq, Head),
+   Filters = [$.|| as_filters(Spec), filters(_, Pattern), q_functions(_)],
+   #{'query' => #{'function_score' => #{'functions' => Filters}}};
+
 build(#rdf_seq{seq = Seq}, #{'_' := Head} = Pattern) ->
    Spec    = lists:zip(Seq, Head),
    Filters = [$.|| as_filters(Spec), filters(_, Pattern), q_filters(_)],
@@ -113,6 +120,27 @@ q_filter({range, #rdf_property{id = IRI}, Value}) ->
 q_filter({terms, #rdf_property{id = IRI}, Value}) ->
    #{terms => #{to_json(IRI) => Value}}.
 
+%%
+%%
+q_functions(Spec) ->
+   lists:map(fun q_function/1, Spec).
+
+q_function({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, Radius]}) ->
+   #{linear => #{
+      to_json(IRI) => #{
+         origin => GeoHash,
+         scale  => Radius
+      }
+   }};
+
+q_function({range, #rdf_property{id = IRI, datatype = ?GEORSS_HASH}, [GeoHash, Circle, Radius]}) ->
+   #{linear => #{
+      to_json(IRI) => #{
+         origin => GeoHash,
+         offset => Circle,
+         scale  => Radius
+      }
+   }}.
 
 %%
 %%
