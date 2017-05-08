@@ -40,10 +40,21 @@ schema(#rdf_property{}) ->
 build(#rdf_seq{seq = Seq}, #{'_' := ['elastic:fsq' | Head]} = Pattern) ->
    Spec    = lists:zip(Seq, Head),
    Filters = [$.|| as_filters(Spec), filters(_, Pattern), q_functions(_)],
-   {
-      Head, 
-      #{'query' => #{'function_score' => #{'functions' => Filters}}}
-   };
+   case Pattern of
+      #{'elastic:fsq' := Score} ->
+         {
+            Head, 
+            #{'query' => 
+               #{'function_score' => #{'functions' => Filters, score_mode => multiply, min_score => Score}}}
+         };
+
+      _ ->
+         {
+            Head, 
+            #{'query' => 
+               #{'function_score' => #{'functions' => Filters, score_mode => multiply}}}
+         }
+   end;
 
 build(#rdf_seq{seq = Seq}, #{'_' := Head} = Pattern) ->
    Spec    = lists:zip(Seq, Head),
