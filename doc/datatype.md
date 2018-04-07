@@ -24,9 +24,9 @@ The binary data-type represents character strings in knowledge statements. The l
 Lang | Data type
 ---  | ---
 Erlang | `-type binary().`
-Semantic | ?XSD_STRING
-Elastic | text
-Datalog | s(...)
+Semantic | `?XSD_STRING`
+Elastic | `text`
+Datalog | `s(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#string"
 
 
@@ -37,18 +37,18 @@ The library derives an arbitrary-precision Integers from Erlang (only limited by
 Lang | Data type
 ---  | ---
 Erlang | `-type integer().`
-Semantic | ?XSD_INTEGER
-        || ?XSD_LONG
-        || ?XSD_INT
-        || ?XSD_SHORT
-        || ?XSD_BYTE
-Elastic | long
-Datalog | i(...)
+Semantic | `?XSD_INTEGER`
+|| `?XSD_LONG`
+|| `?XSD_INT`
+|| `?XSD_SHORT`
+|| `?XSD_BYTE`
+Elastic | `long`
+Datalog | `i(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#integer"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#long"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#int"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#short"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#byte"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#long"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#int"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#short"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#byte"
 
 
 ### float
@@ -59,13 +59,13 @@ Lang | Data type
 ---  | ---
 Erlang | `-type float().`
 Semantic | `?XSD_DECIMAL`
-        || `?XSD_FLOAT`
-        || `?XSD_DOUBLE`
+|| `?XSD_FLOAT`
+|| `?XSD_DOUBLE`
 Elastic | `double`
 Datalog | `f(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#decimal"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#float"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#double"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#float"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#double"
 
 
 ### boolean
@@ -89,17 +89,17 @@ Lang | Data type
 ---  | ---
 Erlang | `-type {integer(), integer(), integer()}.`
 Semantic | `?XSD_DATETIME`
-        || `?XSD_DATE`
-        || `?XSD_TIME`
-        || `?XSD_YEARMONTH`
-        || `?XSD_YEAR`
+|| `?XSD_DATE`
+|| `?XSD_TIME`
+|| `?XSD_YEARMONTH`
+|| `?XSD_YEAR`
 Elastic | `date`
 Datalog | `t(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#dateTime"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#date"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#time"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#gYearMonth"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#gYear"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#date"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#time"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#gYearMonth"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#gYear"
 
 
 Note that library uses same native format to manipulate with:
@@ -117,13 +117,13 @@ Lang | Data type
 ---  | ---
 Erlang | `-type binary().`
 Semantic | `?XSD_MONTHDAY`
-        || `?XSD_MONTH`
-        || `?XSD_DAY`
+|| `?XSD_MONTH`
+|| `?XSD_DAY`
 Elastic | Not supported yet
 Datalog | Not Supported yet
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#gMonthDay"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#gMonth"
-   || xmlns:xsd="http://www.w3.org/2001/XMLSchema#gDay"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#gMonth"
+|| xmlns:xsd="http://www.w3.org/2001/XMLSchema#gDay"
 
 
 ### geo
@@ -134,11 +134,11 @@ Lang | Data type
 ---  | ---
 Erlang | `-type binary().`
 Semantic | `?GEORSS_POINT`
-        || `?GEORSS_HASH`
+|| `?GEORSS_HASH`
 Elastic | `geo_point`
 Datalog | `g(...)`
 RDF | xmlns:xsd="http://www.georss.org/georss/point"
-   || xmlns:xsd="http://www.georss.org/georss/hash"
+|| xmlns:xsd="http://www.georss.org/georss/hash"
 
 
 
