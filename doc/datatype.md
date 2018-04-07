@@ -10,9 +10,9 @@ Knowledge statements contain scalar objects -- literals. Literals are either lan
 Lang | Data type
 ---  | ---
 Erlang | `{iri, uri()} | {iri, prefix(), suffix()}`
-Semantic | `?XSD_ANYURI`
-Elastic | `keyword`
-Datalog | `u(...)`
+Semantic | ?XSD_ANYURI
+Elastic | keyword
+Datalog | u(...)
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#string"
 
 
@@ -24,9 +24,9 @@ The binary data-type represents character strings in knowledge statements. The l
 Lang | Data type
 ---  | ---
 Erlang | `-type binary().`
-Semantic | `?XSD_STRING`
-Elastic | `text`
-Datalog | `s(...)`
+Semantic | ?XSD_STRING
+Elastic | text
+Datalog | s(...)
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#string"
 
 
@@ -37,13 +37,13 @@ The library derives an arbitrary-precision Integers from Erlang (only limited by
 Lang | Data type
 ---  | ---
 Erlang | `-type integer().`
-Semantic | `?XSD_INTEGER`
-        || `?XSD_LONG`
-        || `?XSD_INT`
-        || `XSD_SHORT`
-        || `XSD_BYTE`
-Elastic | `long`
-Datalog | `i(...)`
+Semantic | ?XSD_INTEGER
+        || ?XSD_LONG
+        || ?XSD_INT
+        || ?XSD_SHORT
+        || ?XSD_BYTE
+Elastic | long
+Datalog | i(...)
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#integer"
    || xmlns:xsd="http://www.w3.org/2001/XMLSchema#long"
    || xmlns:xsd="http://www.w3.org/2001/XMLSchema#int"
