@@ -38,10 +38,10 @@ Lang | Data type
 ---  | ---
 Erlang | `-type integer().`
 Semantic | `?XSD_INTEGER`
-         | `?XSD_LONG`
-         | `?XSD_INT`
-         | `XSD_SHORT`
-         | `XSD_BYTE`
+    | `?XSD_LONG`
+    | `?XSD_INT`
+    | `XSD_SHORT`
+    | `XSD_BYTE`
 Elastic | `long`
 Datalog | `i(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#integer"
