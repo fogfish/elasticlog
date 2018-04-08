@@ -12,7 +12,7 @@ Lang | Data type
 Erlang | `{iri, uri()} | {iri, prefix(), suffix()}`
 Semantic | ?XSD_ANYURI
 Elastic | keyword
-Datalog | u(...)
+Datalog | uri(...)
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#string"
 
 
@@ -26,7 +26,7 @@ Lang | Data type
 Erlang | `-type binary().`
 Semantic | `?XSD_STRING`
 Elastic | `text`
-Datalog | `s(...)`
+Datalog | `string(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#string"
 
 
@@ -43,7 +43,7 @@ Semantic | `?XSD_INTEGER`
 || `?XSD_SHORT`
 || `?XSD_BYTE`
 Elastic | `long`
-Datalog | `i(...)`
+Datalog | `int(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#integer"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#long"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#int"
@@ -62,7 +62,7 @@ Semantic | `?XSD_DECIMAL`
 || `?XSD_FLOAT`
 || `?XSD_DOUBLE`
 Elastic | `double`
-Datalog | `f(...)`
+Datalog | `double(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#decimal"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#float"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#double"
@@ -77,7 +77,7 @@ Lang | Data type
 Erlang | `-type true | false.`
 Semantic | `?XSD_BOOLEAN`
 Elastic | `boolean`
-Datalog | `b(...)`
+Datalog | `bool(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#boolean"
 
 
@@ -136,7 +136,7 @@ Erlang | `-type binary().`
 Semantic | `?GEORSS_POINT`
 || `?GEORSS_HASH`
 Elastic | `geo_point`
-Datalog | `g(...)`
+Datalog | `geo(...)`
 RDF | xmlns:xsd="http://www.georss.org/georss/point"
 || xmlns:xsd="http://www.georss.org/georss/hash"
 
