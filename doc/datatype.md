@@ -12,8 +12,8 @@ Lang | Data type
 Erlang | `{iri, uri()} | {iri, prefix(), suffix()}`
 Semantic | ?XSD_ANYURI
 Elastic | keyword
-Datalog | xsd_anyuri(...)
-RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#string"
+Datalog | xsd:anyURI(...)
+RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#anyURI"
 
 
 
@@ -26,7 +26,7 @@ Lang | Data type
 Erlang | `-type binary().`
 Semantic | `?XSD_STRING`
 Elastic | `text`
-Datalog | `xsd_string(...)`
+Datalog | `xsd:string(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#string"
 
 
@@ -43,11 +43,11 @@ Semantic | `?XSD_INTEGER`
 || `?XSD_SHORT`
 || `?XSD_BYTE`
 Elastic | `long`
-Datalog | `xsd_integer(...)`
-|| `xsd_long(...)`
-|| `xsd_int(...)`
-|| `xsd_short(...)`
-|| `xsd_byte(...)`
+Datalog | `xsd:integer(...)`
+|| `xsd:long(...)`
+|| `xsd:int(...)`
+|| `xsd:short(...)`
+|| `xsd:byte(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#integer"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#long"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#int"
@@ -66,9 +66,9 @@ Semantic | `?XSD_DECIMAL`
 || `?XSD_FLOAT`
 || `?XSD_DOUBLE`
 Elastic | `double`
-Datalog | `xsd_decimal(...)`
-|| `xsd_float(...)`
-|| `xsd_double(...)`
+Datalog | `xsd:decimal(...)`
+|| `xsd:float(...)`
+|| `xsd:double(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#decimal"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#float"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#double"
@@ -83,7 +83,7 @@ Lang | Data type
 Erlang | `-type true | false.`
 Semantic | `?XSD_BOOLEAN`
 Elastic | `boolean`
-Datalog | `xsd_boolean(...)`
+Datalog | `xsd:boolean(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#boolean"
 
 
@@ -100,11 +100,11 @@ Semantic | `?XSD_DATETIME`
 || `?XSD_YEARMONTH`
 || `?XSD_YEAR`
 Elastic | `date`
-Datalog | `xsd_datetime(...)`
-|| `xsd_date(...)`
-|| `xsd_time(...)`
-|| `xsd_yearmonth(...)`
-|| `xsd_year(...)`
+Datalog | `xsd:datetime(...)`
+|| `xsd:date(...)`
+|| `xsd:time(...)`
+|| `xsd:yearmonth(...)`
+|| `xsd:year(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#dateTime"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#date"
 || xmlns:xsd="http://www.w3.org/2001/XMLSchema#time"
@@ -146,8 +146,8 @@ Erlang | `-type binary().`
 Semantic | `?GEORSS_POINT`
 || `?GEORSS_HASH`
 Elastic | `geo_point`
-Datalog | `georss_point(...)`
-|| `georss_hash(...)`
+Datalog | `georss:point(...)`
+|| `georss:hash(...)`
 RDF | xmlns:xsd="http://www.georss.org/georss/point"
 || xmlns:xsd="http://www.georss.org/georss/hash"
 
