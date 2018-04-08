@@ -7,36 +7,53 @@
 -compile({parse_transform, category}).
 
 -export([
-   schema/1,
+   match/1,
+   build/1,
    build/2
 ]).
 
 %%
 %%
-schema(#rdf_property{datatype = ?XSD_ANYURI}) ->
-   #{type => keyword};
-schema(#rdf_property{datatype = ?XSD_STRING}) ->
-   #{type => keyword};
-schema(#rdf_property{datatype = ?RDF_LANG_STRING}) ->
-   #{type => string};
-schema(#rdf_property{datatype = ?XSD_INTEGER}) ->
-   #{type => long};
-schema(#rdf_property{datatype = ?XSD_DECIMAL}) ->
-   #{type => double};
-schema(#rdf_property{datatype = ?XSD_BOOLEAN}) ->
-   #{type => boolean};
-schema(#rdf_property{datatype = ?XSD_DATETIME}) ->
-   #{type => date, format => strict_date_optional_time};
-schema(#rdf_property{datatype = ?GEORSS_HASH}) ->
-   #{type => geo_point};
-schema(#rdf_property{}) ->
-   #{type => keyword}.
+match(#{'_' := [S, P]} = Pattern) ->
+   [match(S, s, Pattern), match(P, p, Pattern)].   
+
+match(DatalogKey, ElasticKey, Pattern) ->
+   case Pattern of
+      #{DatalogKey := Value} ->
+         #{match => #{ElasticKey => Value}};
+      _ ->
+         []
+   end.
 
 
 %%
 %% build elastic search query from datalog predicate
 %%  - functional score query
 %%  - match / filter boolean query
+build(#{'_' := [S, P, O]} = Pattern) ->
+   Filters = [],
+   Matches = lists:flatten([s_matches(S, Pattern), p_matches(P, Pattern)]),
+   #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
+
+s_matches(Element, Pattern) ->
+   case Pattern of
+      #{Element := Value} ->
+         #{match => #{s => Value}};
+      _ ->
+         []
+   end.
+
+p_matches(Element, Pattern) ->
+   case Pattern of
+      #{Element := Value} ->
+         #{match => #{p => Value}};
+      _ ->
+         []
+   end.
+
+
+
+
 build(#rdf_seq{seq = Seq}, #{'_' := ['elastic:fsq' | Head]} = Pattern) ->
    Spec    = lists:zip(Seq, Head),
    Filters = [$.|| as_filters(Spec), filters(_, Pattern), q_functions(_)],

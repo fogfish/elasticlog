@@ -14,15 +14,16 @@
 %%   limitations under the License.
 %%
 %% @doc
-%%   elastic search datalog
+%%   datalog interface for elastic search
 -module(elasticlog).
 
 -compile({parse_transform, category}).
 
 -export([start/0]).
 -export([
-   schema/1,
-   schema/2,
+   schema/3,
+   append/2,
+
    c/1,
    horn/2,
    encode/1,
@@ -31,19 +32,28 @@
 
 %%
 %%
+-type sock() :: _.
+
+%%
+%%
 start() ->
    application:ensure_all_started(elasticlog).
 
+
 %%
 %% build schema for semantic data
--spec schema([semantic:iri()]) -> #{}.
--spec schema([semantic:iri()], [_]) -> #{}.
+-spec schema(sock(), _, [_]) -> datum:either().
 
-schema(Spec) ->
-   schema(Spec, []).
+schema(Sock, Bucket, Opts) ->
+   esio:put(Sock, <<$/, (scalar:s(Bucket))/binary>>, elasticlog_schema:new(Opts)).
 
-schema(Spec, Opts) ->
-   elasticlog_schema:new(Spec, Opts).
+
+%%
+%% append knowledge fact 
+-spec append(sock(), semantic:spo()) -> datum:either( semantic:iri() ).
+
+append(Sock, Fact) ->
+   elasticlog_nt:append(Sock, Fact, 5000).
 
 
 %%
@@ -71,17 +81,24 @@ horn(Head, List) ->
 %% 
 -spec encode(_) -> _.
 
-encode(#{<<"@id">> := Id} = Json0) ->
-   Json1 = maps:remove(<<"@id">>, Json0),
-   Json1#{<<"rdf:id">> => Id}.
+encode(#{<<"@id">> := Id} = Json) ->
+   [identity ||
+      maps:remove(<<"@id">>, Json),
+      cats:unit(_#{<<"rdf:id">> => Id})
+   ];
+
+encode(#{<<"rdf:id">> := Id} = Json) ->
+   Json.
    
 %%
 %%
 -spec decode(_) -> _.
 
-decode(#{<<"rdf:id">> := Id} = Json0) ->
-   Json1 = maps:remove(<<"rdf:id">>, Json0),
-   Json1#{<<"@id">> => Id};
+decode(#{<<"rdf:id">> := Id} = Json) ->
+   [identity ||
+      maps:remove(<<"rdf:id">>, Json),
+      cats:unit(_#{<<"@id">> => Id})
+   ];
 
 decode(#{<<"@id">> := _} = Json) ->
    Json.
