@@ -21,7 +21,7 @@
 
 -export([start/0]).
 -export([
-   schema/3,
+   schema/2,
    append/2,
 
    c/1,
@@ -37,15 +37,15 @@
 %%
 %%
 start() ->
-   application:ensure_all_started(elasticlog).
+   application:ensure_all_started(?MODULE).
 
 
 %%
 %% build schema for semantic data
--spec schema(sock(), _, [_]) -> datum:either().
+-spec schema(sock(), [_]) -> datum:either().
 
-schema(Sock, Bucket, Opts) ->
-   esio:put(Sock, <<$/, (scalar:s(Bucket))/binary>>, elasticlog_schema:new(Opts)).
+schema(Sock, Opts) ->
+   esio:schema(Sock, elasticlog_schema:new(Opts)).
 
 
 %%

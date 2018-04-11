@@ -12,7 +12,7 @@
 append(Sock, {_, _, _} = Fact, Timeout) ->
    #{s := S, p := P, o := O} = Spock = semantic:typed(Fact),
    Json  = elasticlog_codec:encode(Spock),
-   Key   = <<"/nt/_doc/", (unique_key(S, P, O))/binary>>,
+   Key   = unique_key(S, P, O),
    esio:put(Sock, Key, Json).
 
 

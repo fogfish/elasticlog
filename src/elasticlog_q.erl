@@ -58,8 +58,11 @@ match_sp(#{'_' := [S, P | _]} = Pattern) ->
 
 %%
 %%
+match_o(#{'@' := 'xsd:string' = Type, '_' := [_, _, O | _]} = Pattern) ->
+   elastic_query_string(O, Type, Pattern);
+
 match_o(#{'@' := Type, '_' := [_, _, O | _]} = Pattern) ->
-   elastic_match(O, elastic_key(Type), Pattern);
+   elastic_match(O, Type, Pattern);
 
 match_o(_) ->
    [].
@@ -67,7 +70,7 @@ match_o(_) ->
 %%
 %%
 filter_o(#{'@' := Type, '_' := [_, _, O | _]} = Pattern) ->
-   elastic_filter(O, elastic_key(Type), Pattern);
+   elastic_filter(O, Type, Pattern);
 
 filter_o(_) ->
    [].
@@ -88,26 +91,6 @@ filter_k(#{'_' := [_, _, _, _, K | _]} = Pattern) ->
 filter_k(_) ->
    [].
 
-%%
-%%
-elastic_key('xsd:anyURI') -> xsd_anyuri;
-elastic_key('xsd:string') -> xsd_string;
-elastic_key('xsd:integer') -> xsd_integer;
-elastic_key('xsd:long') -> xsd_long;
-elastic_key('xsd:int') -> xsd_int;
-elastic_key('xsd:short') -> xsd_short;
-elastic_key('xsd:byte') -> xsd_byte;
-elastic_key('xsd:decimal') -> xsd_decimal;
-elastic_key('xsd:float') -> xsd_float;
-elastic_key('xsd:double') -> xsd_double;
-elastic_key('xsd:boolean') -> xsd_boolean;
-elastic_key('xsd:datetime') -> xsd_datetime;
-elastic_key('xsd:date') -> xsd_date;
-elastic_key('xsd:time') -> xsd_time;
-elastic_key('xsd:yearmonth') -> xsd_yearmonth;
-elastic_key('xsd:year') -> xsd_year;
-elastic_key('georss:point') -> georss_point;
-elastic_key('georss:hash') -> georss_hash.
 
 %%
 %%
@@ -124,6 +107,21 @@ elastic_match(DatalogKey, ElasticKey, Pattern)
 elastic_match(DatalogVal, ElasticKey, _) ->
    [#{match => #{ElasticKey => DatalogVal}}].
 
+%%
+%%
+elastic_query_string(DatalogKey, ElasticKey, Pattern)
+ when is_atom(DatalogKey)  ->
+   case Pattern of
+      %% range filter is encoded as list at datalog: [{'>', ...}, ...]
+      #{DatalogKey := Value} when not is_list(Value) ->
+         [#{query_string => #{default_field => ElasticKey, 'query' => Value}}];
+      _ ->
+         []
+   end;
+
+elastic_query_string(DatalogVal, ElasticKey, _) ->
+   [#{query_string => #{default_field => ElasticKey, 'query' => DatalogVal}}].
+
 
 %%
 %%
@@ -137,7 +135,6 @@ elastic_filter(DatalogKey, ElasticKey, Pattern) ->
       _ ->
          []
    end.
-
 
 %%
 %%

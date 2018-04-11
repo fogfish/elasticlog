@@ -30,7 +30,7 @@ schema() ->
      ,{<<"p">>, #{type => keyword}}
      ,{<<"c">>, #{type => double}}
      ,{<<"k">>, #{type => text}}
-     |[{elasticlog_property:encode(X), typeof(X)} || X <- datatypes()]
+     |[{key(X), typeof(X)} || X <- datatypes()]
    ].
 
 datatypes() ->
@@ -51,9 +51,9 @@ datatypes() ->
       ?XSD_TIME,
       ?XSD_YEARMONTH,
       ?XSD_YEAR,
-      % ?XSD_MONTHDAY,
-      % ?XSD_MONTH,
-      % ?XSD_DAY,
+      ?XSD_MONTHDAY,
+      ?XSD_MONTH,
+      ?XSD_DAY,
       ?GEORSS_POINT,
       ?GEORSS_HASH   
    ].
@@ -85,10 +85,17 @@ typeof(?XSD_TIME)    -> #{type => date, format => basic_date_time_no_millis};
 typeof(?XSD_YEARMONTH) -> #{type => date, format => basic_date_time_no_millis};
 typeof(?XSD_YEAR)    -> #{type => date, format => basic_date_time_no_millis};
 
-% typeof(?XSD_MONTHDAY)-> <<"xsd_gmonthday">>;
-% typeof(?XSD_MONTH)   -> <<"xsd_gmonth">>;
-% typeof(?XSD_DAY)     -> <<"xsd_gday">>;
+typeof(?XSD_MONTHDAY)-> #{type => text};
+typeof(?XSD_MONTH)   -> #{type => text};
+typeof(?XSD_DAY)     -> #{type => text};
 
 typeof(?GEORSS_POINT) -> #{type => geo_point};
 typeof(?GEORSS_HASH)  -> #{type => geo_point}.
+
+
+%%
+-spec key( semantic:iri() ) -> binary().
+
+key({iri, Prefix, Suffix}) ->
+   <<Prefix/binary, $:, Suffix/binary>>.
 
