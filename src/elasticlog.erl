@@ -22,6 +22,7 @@
 -export([start/0]).
 -export([
    schema/2,
+   schema/3,
    append/2,
 
    c/1,
@@ -42,10 +43,14 @@ start() ->
 
 %%
 %% build schema for semantic data
--spec schema(sock(), [_]) -> datum:either().
+-spec schema(sock(), _) -> datum:either().
+-spec schema(sock(), _, [_]) -> datum:either().
 
-schema(Sock, Opts) ->
-   esio:schema(Sock, elasticlog_schema:new(Opts)).
+schema(Sock, Schema) ->
+   schema(Sock, Schema, []).
+
+schema(Sock, Schema, Opts) ->
+   esio:schema(Sock, elasticlog_schema:new(Schema, Opts)).
 
 
 %%
@@ -60,7 +65,7 @@ append(Sock, Fact) ->
 %% compile textual query
 c(Datalog)
  when is_map(Datalog) ->
-   datalog:c(elasticlog_q, Datalog);
+   datalog:cflat(elasticlog_q, Datalog);
 c(Datalog)
  when is_list(Datalog) ->
    c(datalog:p(Datalog)).

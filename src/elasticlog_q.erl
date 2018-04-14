@@ -34,61 +34,34 @@ sigma(Pattern) ->
    end. 
 
 sigma(Sock, #{'_' := Head} = Pattern) ->
-   io:format("==> ~p~n", [q(Pattern)]),
-   heap(Head, esio:stream(Sock, q(Pattern))).
+   heap(Head, Pattern, esio:stream(Sock, q(Pattern))).
 
 %%
 %%
-q(Pattern) ->
-   Matches = lists:flatten([
-      match_sp(Pattern),
-      match_o(Pattern)
-   ]),
-   Filters  = lists:flatten([
-      filter_o(Pattern),
-      filter_c(Pattern),
-      filter_k(Pattern)
-   ]),
+q(#{'@' := Seq} = Pattern) ->
+   io:format("==> ~p~n", [Pattern]),
+   Matches = lists:flatten(lists:map(fun(X) -> match(maps:merge(Pattern, X)) end, Seq)),
+   Filters = lists:flatten(lists:map(fun(X) -> filter(maps:merge(Pattern, X)) end, Seq)),
    #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
 
-%%
-%%
-match_sp(#{'_' := [S, P | _]} = Pattern) ->
-   [elastic_match(S, s, Pattern), elastic_match(P, p, Pattern)].
 
 %%
 %%
-match_o(#{'@' := 'xsd:string' = Type, '_' := [_, _, O | _]} = Pattern) ->
-   elastic_query_string(O, Type, Pattern);
+match(#{'@' := 'xsd:string' = Type, '_' := [_, P, O | _]} = Pattern) ->
+   elastic_query_string(O, P, Pattern);
 
-match_o(#{'@' := Type, '_' := [_, _, O | _]} = Pattern) ->
-   elastic_match(O, Type, Pattern);
+match(#{'@' := _, '_' := [_, P, O | _]} = Pattern) ->
+   elastic_match(O, P, Pattern);
 
-match_o(_) ->
+match(_) ->
    [].
 
 %%
 %%
-filter_o(#{'@' := Type, '_' := [_, _, O | _]} = Pattern) ->
-   elastic_filter(O, Type, Pattern);
+filter(#{'@' := _, '_' := [_, P, O | _]} = Pattern) ->
+   elastic_filter(O, P, Pattern);
 
-filter_o(_) ->
-   [].
-
-%%
-%%
-filter_c(#{'_' := [_, _, _, C | _]} = Pattern) ->
-   elastic_filter(C, c, Pattern);
-
-filter_c(_) ->
-   [].
-
-%%
-%%
-filter_k(#{'_' := [_, _, _, _, K | _]} = Pattern) ->
-   elastic_filter(K, k, Pattern);
-
-filter_k(_) ->
+filter(_) ->
    [].
 
 
@@ -146,30 +119,34 @@ elastic_compare('=<') -> lte.
 
 %%
 %%
-heap([S, P, O], Stream) ->
+heap(Head, #{'@' := Seq}, Stream) ->
+   S = [X || #{'_' := [X | _]} <- Seq, lists:member(X, Head)],
+   P = [{X, Y, scalar:s(Type)} || #{'@' := Type, '_' := [_, X, Y]} <- Seq, lists:member(Y, Head)],
    stream:map(
       fun(#{<<"_source">> := Json}) ->
-         #{s := Sval, p := Pval, o := Oval} = elasticlog_codec:decode(Json),
-         #{S => Sval, P => Pval, O => Oval} 
-      end,
-      Stream
-   );
-
-heap([S, P, O, C], Stream) ->
-   stream:map(
-      fun(#{<<"_source">> := Json, <<"_score">> := Cval}) ->
-         #{s := Sval, p := Pval, o := Oval} = elasticlog_codec:decode(Json),
-         #{S => Sval, P => Pval, O => Oval, C => Cval} 
-      end,
-      Stream
-   );
-
-heap([S, P, O, C, K], Stream) ->
-   stream:map(
-      fun(#{<<"_source">> := Json, <<"_score">> := Cval}) ->
-         #{s := Sval, p := Pval, o := Oval, k := Kval} = elasticlog_codec:decode(Json),
-         #{S => Sval, P => Pval, O => Oval, C => Cval, K => Kval} 
+         decode_p(Json, decode_s(Json, #{}, S), P)
       end,
       Stream
    ).
 
+decode_s(Json, Acc0, S) ->
+   lists:foldl(
+      fun(HeapKey, Acc) -> 
+         ElasticVal = lens:get(lens:at(<<"s">>), Json),
+         ErlangVal = elasticlog_codec:decode(?XSD_ANYURI, ElasticVal),
+         Acc#{HeapKey => ErlangVal} 
+      end, 
+      Acc0, 
+      S
+   ).
+
+decode_p(Json, Acc0, P) ->
+   lists:foldl(
+      fun({ElasticKey, HeapKey, Type}, Acc) ->
+         ElasticVal = lens:get(lens:at(ElasticKey), Json),
+         ErlangVal = elasticlog_codec:decode(Type, ElasticVal),
+         Acc#{HeapKey => ErlangVal}
+      end,
+      Acc0,
+      P
+   ).

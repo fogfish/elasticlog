@@ -3,7 +3,7 @@
 -include_lib("semantic/include/semantic.hrl").
 
 -export([
-   new/1
+   new/2
 ]).
 
 %%
@@ -11,53 +11,24 @@
 %%    n - number of replica (default 1)
 %%    q - number of shards (default 8)
 %%    
-new(Opts) ->
+new(Schema, Opts) ->
    #{
       settings => #{
          number_of_shards   => opts:val(q, 8, Opts), 
          number_of_replicas => opts:val(n, 1, Opts)
       },
       mappings => #{
-         '_default_' => #{
-            properties => maps:from_list(schema())
+         '_doc' => #{
+            properties => maps:from_list(schema(Schema))
          }
       }
    }.
 
-schema() ->
+schema(Schema) ->
    [
       {<<"s">>, #{type => keyword}}
-     ,{<<"p">>, #{type => keyword}}
-     ,{<<"c">>, #{type => double}}
-     ,{<<"k">>, #{type => text}}
-     |[{key(X), typeof(X)} || X <- datatypes()]
+     |[{key(semantic:compact(scalar:s(P))), typeof(semantic:compact(scalar:s(Type)))} || {P, Type} <- maps:to_list(Schema)]
    ].
-
-datatypes() ->
-   [
-      ?XSD_ANYURI,
-      ?XSD_STRING,
-      ?XSD_INTEGER,
-      ?XSD_BYTE,
-      ?XSD_SHORT,
-      ?XSD_INT,
-      ?XSD_LONG,
-      ?XSD_DECIMAL,
-      ?XSD_FLOAT,
-      ?XSD_DOUBLE,
-      ?XSD_BOOLEAN,
-      ?XSD_DATETIME,
-      ?XSD_DATE,
-      ?XSD_TIME,
-      ?XSD_YEARMONTH,
-      ?XSD_YEAR,
-      ?XSD_MONTHDAY,
-      ?XSD_MONTH,
-      ?XSD_DAY,
-      ?GEORSS_POINT,
-      ?GEORSS_HASH   
-   ].
-
 
 %%
 %%
