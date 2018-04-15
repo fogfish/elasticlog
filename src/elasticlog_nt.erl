@@ -11,11 +11,11 @@
 %%
 %%
 append(Sock, {_, _, _} = Fact, Timeout) ->
-   #{s := S, p := P, o:= O, type := Type} = Spock = semantic:typed(Fact),
+   #{s := S, p := P, o:= O, type := Type} = semantic:typed(Fact),
    JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
    JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
    JsonO = elasticlog_codec:encode(Type, O),
-   esio:update(Sock, unique_key(JsonS), #{JsonP => JsonO}).
+   esio:update(Sock, unique_key(JsonS), #{s => JsonS, JsonP => JsonO}, Timeout).
 
 
 %%

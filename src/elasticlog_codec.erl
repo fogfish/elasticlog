@@ -71,7 +71,7 @@ decode(_, Val) ->
 
 
 %%
-decode_iri(<<"_:", Iri/binary>>) ->
+decode_iri(<<Iri/binary>>) ->
    semantic:compact(Iri);
 decode_iri(Iri) ->
    semantic:absolute(Iri).

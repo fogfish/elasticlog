@@ -24,7 +24,9 @@
    schema/2,
    schema/3,
    append/2,
+   append/3,
 
+   p/1,
    c/1,
    horn/2,
    encode/1,
@@ -56,19 +58,24 @@ schema(Sock, Schema, Opts) ->
 %%
 %% append knowledge fact 
 -spec append(sock(), semantic:spo()) -> datum:either( semantic:iri() ).
+-spec append(sock(), semantic:spo(), timeout()) -> datum:either( semantic:iri() ).
 
 append(Sock, Fact) ->
-   elasticlog_nt:append(Sock, Fact, 5000).
+   append(Sock, Fact, 30000).
 
+append(Sock, Fact, Timeout) ->
+   elasticlog_nt:append(Sock, Fact, Timeout).
 
 %%
-%% compile textual query
-c(Datalog)
- when is_map(Datalog) ->
-   datalog:cflat(elasticlog_q, Datalog);
-c(Datalog)
- when is_list(Datalog) ->
-   c(datalog:p(Datalog)).
+%% parse datalog query
+p(Datalog) ->
+   datalog:pflat(Datalog).
+
+%%
+%% compile native query
+c(Datalog) ->
+   datalog:cflat(elasticlog_q, Datalog).
+
 
 %%
 %% declare horn clause using native query syntax
@@ -92,7 +99,7 @@ encode(#{<<"@id">> := Id} = Json) ->
       cats:unit(_#{<<"rdf:id">> => Id})
    ];
 
-encode(#{<<"rdf:id">> := Id} = Json) ->
+encode(#{<<"rdf:id">> := _} = Json) ->
    Json.
    
 %%

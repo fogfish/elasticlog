@@ -47,7 +47,7 @@ q(#{'@' := Seq} = Pattern) ->
 
 %%
 %%
-match(#{'@' := 'xsd:string' = Type, '_' := [_, P, O | _]} = Pattern) ->
+match(#{'@' := 'xsd:string', '_' := [_, P, O | _]} = Pattern) ->
    elastic_query_string(O, P, Pattern);
 
 match(#{'@' := _, '_' := [_, P, O | _]} = Pattern) ->
@@ -58,6 +58,9 @@ match(_) ->
 
 %%
 %%
+filter(#{'@' := 'georss:hash', '_' := [_, P, O | _]} = Pattern) ->
+   elastic_geo_distance(O, P, Pattern);
+
 filter(#{'@' := _, '_' := [_, P, O | _]} = Pattern) ->
    elastic_filter(O, P, Pattern);
 
@@ -115,6 +118,18 @@ elastic_compare('>')  -> gt;
 elastic_compare('>=') -> gte; 
 elastic_compare('<')  -> lt;
 elastic_compare('=<') -> lte.
+
+
+%%
+%%
+elastic_geo_distance(DatalogKey, ElasticKey, Pattern) ->
+   case Pattern of
+      %% geo range filter is encoded as list at datalog: [hash, radius]
+      #{DatalogKey := [GeoHash, Radius]} ->
+         #{geo_distance => #{distance => Radius, ElasticKey => GeoHash}};
+      _ ->
+         []
+   end.
 
 
 %%
