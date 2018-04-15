@@ -21,6 +21,7 @@
 
 -export([start/0]).
 -export([
+   schema/1,
    schema/2,
    schema/3,
    append/2,
@@ -42,6 +43,15 @@
 start() ->
    application:ensure_all_started(?MODULE).
 
+%%
+%% read semantic schema
+-spec schema(sock()) -> datum:either(_).
+
+schema(Sock) ->
+   [either ||
+      esio:schema(Sock),
+      cats:unit(elasticlog_schema:predicate(_))
+   ].
 
 %%
 %% build schema for semantic data

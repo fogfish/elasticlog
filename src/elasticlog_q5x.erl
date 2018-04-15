@@ -30,7 +30,7 @@ match(DatalogKey, ElasticKey, Pattern) ->
 %% build elastic search query from datalog predicate
 %%  - functional score query
 %%  - match / filter boolean query
-build(#{'_' := [S, P, O]} = Pattern) ->
+build(#{'_' := [S, P, _]} = Pattern) ->
    Filters = [],
    Matches = lists:flatten([s_matches(S, Pattern), p_matches(P, Pattern)]),
    #{'query' => #{bool => #{must => Matches, filter => Filters}}}.

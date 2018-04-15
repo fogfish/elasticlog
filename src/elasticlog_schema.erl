@@ -3,7 +3,8 @@
 -include_lib("semantic/include/semantic.hrl").
 
 -export([
-   new/2
+   new/2,
+   predicate/1
 ]).
 
 %%
@@ -24,11 +25,24 @@ new(Schema, Opts) ->
       }
    }.
 
-schema(Schema) ->
+schema(Schema)
+ when is_map(Schema) ->
+   schema(maps:to_list(Schema));
+schema(Schema)
+ when is_list(Schema) ->
    [
       {<<"s">>, #{type => keyword}}
-     |[{key(semantic:compact(scalar:s(P))), typeof(semantic:compact(scalar:s(Type)))} || {P, Type} <- maps:to_list(Schema)]
+     |[{key(semantic:compact(P)), typeof(semantic:compact(Type))} || {P, Type} <- Schema]
    ].
+
+%%
+-spec key( semantic:iri() ) -> binary().
+
+key({iri, Prefix, Suffix}) ->
+   <<Prefix/binary, $:, Suffix/binary>>;
+key({iri, IRI}) ->
+   IRI.
+
 
 %%
 %%
@@ -61,12 +75,22 @@ typeof(?XSD_MONTH)   -> #{type => text};
 typeof(?XSD_DAY)     -> #{type => text};
 
 typeof(?GEORSS_POINT) -> #{type => geo_point};
-typeof(?GEORSS_HASH)  -> #{type => geo_point}.
+typeof(?GEORSS_HASH)  -> #{type => geo_point};
+typeof({iri, ?LANG, _}) -> #{type => text}.
 
 
 %%
--spec key( semantic:iri() ) -> binary().
+%%
+predicate(Json) ->
+   {_, Schema} = hd(maps:to_list(Json)),
+   Properties  = lens:get(lens:c(lens:at(<<"mappings">>), lens:at(<<"_doc">>), lens:at(<<"properties">>)), Schema),
+   [{semantic:compact(P), isa(lens:get(lens:at(<<"type">>), Type))} || {P, Type} <- maps:to_list(Properties)].
 
-key({iri, Prefix, Suffix}) ->
-   <<Prefix/binary, $:, Suffix/binary>>.
+isa(<<"keyword">>) -> ?XSD_ANYURI;
+isa(<<"text">>) -> ?XSD_STRING;
+isa(<<"long">>) -> ?XSD_INTEGER;
+isa(<<"double">>) -> ?XSD_DECIMAL;
+isa(<<"boolean">>) -> ?XSD_BOOLEAN;
+isa(<<"date">>) -> ?XSD_DATETIME;
+isa(<<"geo_point">>) -> ?GEORSS_HASH.
 

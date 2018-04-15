@@ -39,11 +39,15 @@ sigma(Sock, #{'_' := Head} = Pattern) ->
 %%
 %%
 q(#{'@' := Seq} = Pattern) ->
-   io:format("==> ~p~n", [Pattern]),
    Matches = lists:flatten(lists:map(fun(X) -> match(maps:merge(Pattern, X)) end, Seq)),
    Filters = lists:flatten(lists:map(fun(X) -> filter(maps:merge(Pattern, X)) end, Seq)),
    #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
 
+%%
+%%
+% debug(Json) ->
+%    io:format("~s~n", [jsx:encode(Json)]),
+%    Json.
 
 %%
 %%
