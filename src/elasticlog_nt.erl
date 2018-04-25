@@ -11,7 +11,9 @@
 %%
 %%
 append(Sock, {_, _, _} = Fact, Timeout) ->
-   #{s := S, p := P, o:= O, type := Type} = semantic:typed(Fact),
+   append(Sock, semantic:typed(Fact), Timeout);
+
+append(Sock, #{s := S, p := P, o:= O, type := Type}, Timeout) ->
    JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
    JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
    JsonO = elasticlog_codec:encode(Type, O),

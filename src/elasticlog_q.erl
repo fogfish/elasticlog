@@ -45,9 +45,9 @@ q(#{'@' := Seq} = Pattern) ->
 
 %%
 %%
-% debug(Json) ->
-%    io:format("~s~n", [jsx:encode(Json)]),
-%    Json.
+%debug(Json) ->
+%   io:format("~s~n", [jsx:encode(Json)]),
+%   Json.
 
 %%
 %%
@@ -80,6 +80,8 @@ elastic_match(DatalogKey, ElasticKey, Pattern)
       %% range filter is encoded as list at datalog: [{'>', ...}, ...]
       #{DatalogKey := Value} when not is_list(Value) ->
          [#{match => #{ElasticKey => Value}}];
+      #{DatalogKey := [H | _] = Value} when not is_tuple(H) ->
+         [#{match => #{ElasticKey => X}} || X <- Value];
       _ ->
          []
    end;
@@ -95,6 +97,8 @@ elastic_query_string(DatalogKey, ElasticKey, Pattern)
       %% range filter is encoded as list at datalog: [{'>', ...}, ...]
       #{DatalogKey := Value} when not is_list(Value) ->
          [#{query_string => #{default_field => ElasticKey, 'query' => Value}}];
+      #{DatalogKey := [H | _] = Value} when not is_tuple(H) ->
+         [#{query_string => #{default_field => ElasticKey, 'query' => scalar:s(lists:join(<<" AND ">>, Value))}}];
       _ ->
          []
    end;
@@ -108,7 +112,7 @@ elastic_query_string(DatalogVal, ElasticKey, _) ->
 elastic_filter(DatalogKey, ElasticKey, Pattern) ->
    case Pattern of
       %% range filter is encoded as list at datalog: [{'>', ...}, ...]
-      #{DatalogKey := Value} when is_list(Value) ->
+      #{DatalogKey := [H | _] = Value} when is_tuple(H) ->
          #{range => 
             #{ElasticKey => maps:from_list([{elastic_compare(Op), X} || {Op, X} <- Value])}
          };

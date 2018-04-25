@@ -15,6 +15,9 @@
 %%
 -spec encode(semantic:type(), _) -> _.
 
+encode(Type, List)
+ when is_list(List) ->
+   [encode(Type, X) || X <- List];
 
 encode(?XSD_ANYURI, Iri) -> 
    encode_iri(Iri);
@@ -47,6 +50,10 @@ encode_iri({iri, Urn}) ->
 %%
 -spec decode(semantic:type(), _) -> _.
 
+
+decode(Type, List)
+ when is_list(List) ->
+   [decode(Type, X) || X <- List];
 
 decode(?XSD_ANYURI, Iri) -> 
    decode_iri(Iri);
