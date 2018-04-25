@@ -46,16 +46,16 @@ q(#{'@' := Seq} = Pattern) ->
 %%
 %%
 %debug(Json) ->
-%   io:format("~s~n", [jsx:encode(Json)]),
-%   Json.
+%  io:format("~s~n", [jsx:encode(Json)]),
+%  Json.
 
 %%
 %%
 match(#{'@' := 'xsd:string', '_' := [_, P, O | _]} = Pattern) ->
    elastic_query_string(O, P, Pattern);
 
-match(#{'@' := _, '_' := [_, P, O | _]} = Pattern) ->
-   elastic_match(O, P, Pattern);
+match(#{'@' := Type, '_' := [_, P, O | _]} = Pattern) ->
+   elastic_match(semantic:compact(Type), O, P, Pattern);
 
 match(_) ->
    [].
@@ -65,8 +65,8 @@ match(_) ->
 filter(#{'@' := 'georss:hash', '_' := [_, P, O | _]} = Pattern) ->
    elastic_geo_distance(O, P, Pattern);
 
-filter(#{'@' := _, '_' := [_, P, O | _]} = Pattern) ->
-   elastic_filter(O, P, Pattern);
+filter(#{'@' := Type, '_' := [_, P, O | _]} = Pattern) ->
+   elastic_filter(semantic:compact(Type), O, P, Pattern);
 
 filter(_) ->
    [].
@@ -74,19 +74,19 @@ filter(_) ->
 
 %%
 %%
-elastic_match(DatalogKey, ElasticKey, Pattern)
+elastic_match(Type, DatalogKey, ElasticKey, Pattern)
  when is_atom(DatalogKey)  ->
    case Pattern of
       %% range filter is encoded as list at datalog: [{'>', ...}, ...]
       #{DatalogKey := Value} when not is_list(Value) ->
-         [#{match => #{ElasticKey => Value}}];
+         [#{match => #{ElasticKey => elasticlog_codec:encode(Type, Value)}}];
       #{DatalogKey := [H | _] = Value} when not is_tuple(H) ->
-         [#{match => #{ElasticKey => X}} || X <- Value];
+         [#{match => #{ElasticKey => elasticlog_codec:encode(Type, X)}} || X <- Value];
       _ ->
          []
    end;
 
-elastic_match(DatalogVal, ElasticKey, _) ->
+elastic_match(_Type, DatalogVal, ElasticKey, _) ->
    [#{match => #{ElasticKey => DatalogVal}}].
 
 %%
@@ -109,12 +109,12 @@ elastic_query_string(DatalogVal, ElasticKey, _) ->
 
 %%
 %%
-elastic_filter(DatalogKey, ElasticKey, Pattern) ->
+elastic_filter(Type, DatalogKey, ElasticKey, Pattern) ->
    case Pattern of
       %% range filter is encoded as list at datalog: [{'>', ...}, ...]
       #{DatalogKey := [H | _] = Value} when is_tuple(H) ->
          #{range => 
-            #{ElasticKey => maps:from_list([{elastic_compare(Op), X} || {Op, X} <- Value])}
+            #{ElasticKey => maps:from_list([{elastic_compare(Op), elasticlog_codec:encode(Type, X)} || {Op, X} <- Value])}
          };
       _ ->
          []
