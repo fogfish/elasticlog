@@ -26,6 +26,8 @@
    schema/3,
    append/2,
    append/3,
+   append_/2,
+   append_/3,
 
    p/1,
    c/1,
@@ -75,6 +77,17 @@ append(Sock, Fact) ->
 
 append(Sock, Fact, Timeout) ->
    elasticlog_nt:append(Sock, Fact, Timeout).
+
+
+-spec append_(sock(), semantic:spo()) -> ok | reference().
+-spec append_(sock(), semantic:spo(), boolean()) -> ok | reference().
+
+append_(Sock, Fact) ->
+   append_(Sock, Fact, false).
+
+append_(Sock, Fact, Flag) ->
+   elasticlog_nt:append_(Sock, Fact, Flag).
+
 
 %%
 %% parse datalog query

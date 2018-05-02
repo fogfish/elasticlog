@@ -4,7 +4,8 @@
 -include_lib("semantic/include/semantic.hrl").
 
 -export([
-   append/3
+   append/3,
+   append_/3
 ]).
 
 
@@ -18,6 +19,18 @@ append(Sock, #{s := S, p := P, o:= O, type := Type}, Timeout) ->
    JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
    JsonO = elasticlog_codec:encode(Type, O),
    esio:update(Sock, unique_key(JsonS), #{s => JsonS, JsonP => JsonO}, Timeout).
+
+%%
+%%
+append_(Sock, {_, _, _} = Fact, Flag) ->
+   append_(Sock, semantic:typed(Fact), Flag);
+
+append_(Sock, #{s := S, p := P, o:= O, type := Type}, Flag) ->
+   JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
+   JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
+   JsonO = elasticlog_codec:encode(Type, O),
+   esio:update_(Sock, unique_key(JsonS), #{s => JsonS, JsonP => JsonO}, Flag).
+
 
 
 %%
