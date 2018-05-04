@@ -83,7 +83,7 @@ elastic_match(Type, DatalogKey, ElasticKey, Pattern)
       #{DatalogKey := [H | _] = Value} when not is_tuple(H) ->
          [#{match => #{ElasticKey => elasticlog_codec:encode(Type, X)}} || X <- Value];
       _ ->
-         []
+         [#{exists => #{field => ElasticKey}}]
    end;
 
 elastic_match(_Type, DatalogVal, ElasticKey, _) ->
@@ -100,7 +100,7 @@ elastic_query_string(DatalogKey, ElasticKey, Pattern)
       #{DatalogKey := [H | _] = Value} when not is_tuple(H) ->
          [#{query_string => #{default_field => ElasticKey, 'query' => scalar:s(lists:join(<<" AND ">>, Value))}}];
       _ ->
-         []
+         [#{exists => #{field => ElasticKey}}]
    end;
 
 elastic_query_string(DatalogVal, ElasticKey, _) ->
@@ -144,10 +144,11 @@ elastic_geo_distance(DatalogKey, ElasticKey, Pattern) ->
 %%
 heap(Head, #{'@' := Seq}, Stream) ->
    S = [X || #{'_' := [X | _]} <- Seq, lists:member(X, Head)],
-   P = [{X, Y, scalar:s(Type)} || #{'@' := Type, '_' := [_, X, Y]} <- Seq, lists:member(Y, Head)],
+   P = [{X, Y, scalar:s(Type)} || #{'@' := Type, '_' := [_, X, Y | _]} <- Seq, lists:member(Y, Head)],
+   K = [X || #{'@' := 'xsd:string', '_' := [_, _, _, X]} <- Seq, lists:member(X, Head)],
    stream:map(
-      fun(#{<<"_source">> := Json}) ->
-         decode_p(Json, decode_s(Json, #{}, S), P)
+      fun(#{<<"_source">> := Json, <<"_score">> := Score}) ->
+         decode_k(Score, decode_p(Json, decode_s(Json, #{}, S), P), K)
       end,
       Stream
    ).
@@ -173,3 +174,14 @@ decode_p(Json, Acc0, P) ->
       Acc0,
       P
    ).
+
+decode_k(Score, Acc0, K) ->
+   lists:foldl(
+      fun(HeapKey, Acc) -> 
+         ErlangVal = elasticlog_codec:decode(?XSD_DECIMAL, Score),
+         Acc#{HeapKey => ErlangVal} 
+      end, 
+      Acc0, 
+      K
+   ).
+

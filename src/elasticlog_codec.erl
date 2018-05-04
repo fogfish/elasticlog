@@ -44,7 +44,10 @@ encode(_, Val) ->
 encode_iri({iri, Prefix, Suffix}) ->
    <<Prefix/binary, $:, Suffix/binary>>;
 encode_iri({iri, Urn}) ->
-   Urn.
+   Urn;
+encode_iri(IRI)
+ when is_binary(IRI) ->
+   IRI.
 
 %%
 %%
