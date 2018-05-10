@@ -9,10 +9,10 @@ Knowledge statements contain scalar objects -- literals. Literals are either lan
 
 Lang | Data type
 ---  | ---
-Erlang | `{iri, uri()} | {iri, prefix(), suffix()}`
-Semantic | ?XSD_ANYURI
-Elastic | keyword
-Datalog | xsd:anyURI(...)
+Erlang | `-type {iri, uri()} | {iri, prefix(), suffix()}.`
+Semantic | `?XSD_ANYURI`
+Elastic | `keyword`
+Datalog | `xsd:anyURI(...)`
 RDF | xmlns:xsd="http://www.w3.org/2001/XMLSchema#anyURI"
 
 
