@@ -80,7 +80,7 @@ The value is either true or false, representing a logic values
 
 Lang | Data type
 ---  | ---
-Erlang | `-type true | false.`
+Erlang | `-type true \| false.`
 Semantic | `?XSD_BOOLEAN`
 Elastic | `boolean`
 Datalog | `xsd:boolean(...)`
