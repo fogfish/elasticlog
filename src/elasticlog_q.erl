@@ -21,55 +21,123 @@
 -include_lib("semantic/include/semantic.hrl").
 
 -export([
-   sigma/1
+   stream/2
+   % sigma/1
 ]).
+
+
+stream(Keys, Head) ->
+   fun(Sock) ->
+      [identity ||
+         schema(Sock, Keys),
+         lists:zip3(_, Keys, Head),
+         q(_),
+         esio:stream(Sock, _),
+         head(Keys, _)
+      ]
+   end.
+
+schema(Sock, Keys) ->
+   {ok, Schema} = esio:schema(Sock),
+   {_,  Bucket} = hd(maps:to_list(Schema)),
+   [lens:get(lens_schema(Key), Bucket) || Key <- Keys].
+
+lens_schema(Key) ->
+   lens:c(
+      lens:at(<<"mappings">>), 
+      lens:at(<<"_doc">>),
+      lens:at(<<"properties">>),
+      lens:at(Key),
+      lens:at(<<"type">>)
+   ).
+
+head(Keys, Stream) ->
+   stream:map(
+      fun(#{<<"_source">> := Json, <<"_score">> := Score}) ->
+         lists:map(fun(X) -> lens:get(lens:at(X), Json) end, Keys)
+      end,
+      Stream
+   ).
+
 
 %%
 %% build sigma function
-sigma(Pattern) ->
-   fun(Sock) ->
-      fun(Stream) ->
-         sigma(Sock, datalog:bind(stream:head(Stream), Pattern))
-      end
-   end. 
+% sigma(Pattern) ->
+%    fun(Sock) ->
+%       fun(Stream) ->
+%          sigma(Sock, datalog:bind(stream:head(Stream), Pattern))
+%       end
+%    end. 
 
-sigma(Sock, #{'_' := Head} = Pattern) ->
-   heap(Head, Pattern, esio:stream(Sock, q(Pattern))).
-
-%%
-%%
-q(#{'@' := Seq} = Pattern) ->
-   Matches = lists:flatten(lists:map(fun(X) -> match(maps:merge(Pattern, X)) end, Seq)),
-   Filters = lists:flatten(lists:map(fun(X) -> filter(maps:merge(Pattern, X)) end, Seq)),
-   #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
+% sigma(Sock, #{'_' := Head} = Pattern) ->
+%    heap(Head, Pattern, esio:stream(Sock, q(Pattern))).
 
 %%
 %%
-%debug(Json) ->
-%  io:format("~s~n", [jsx:encode(Json)]),
-%  Json.
+q(Pattern) ->
+   io:format("==> ~p~n", [Pattern]),
+
+   Matches = lists:flatten(lists:map(fun(X) -> match(X) end, Pattern)),
+   Filters = lists:flatten(lists:map(fun(X) -> filter(X) end, Pattern)),
+   debug(#{'query' => #{bool => #{must => Matches, filter => Filters}}}).
 
 %%
 %%
-match(#{'@' := 'xsd:string', '_' := [_, P, O | _]} = Pattern) ->
-   elastic_query_string(O, P, Pattern);
+debug(Json) ->
+   io:format("~s~n", [jsx:encode(Json)]),
+   Json.
 
-match(#{'@' := Type, '_' := [_, P, O | _]} = Pattern) ->
-   elastic_match(semantic:compact(Type), O, P, Pattern);
-
+%%
+%%
+match({_, ElasticKey, '_'}) ->
+   [#{exists => #{field => ElasticKey}}];
+match({<<"text">>, ElasticKey, Pattern}) -> 
+   elastic_query_string(ElasticKey, Pattern);
+% match({Type, ElasticKey, Pattern}) ->
+%    elastic_match(Type, ElasticKey, Pattern);
 match(_) ->
    [].
 
 %%
 %%
-filter(#{'@' := 'georss:hash', '_' := [_, P, O | _]} = Pattern) ->
-   elastic_geo_distance(O, P, Pattern);
-
-filter(#{'@' := Type, '_' := [_, P, O | _]} = Pattern) ->
-   elastic_filter(semantic:compact(Type), O, P, Pattern);
-
+filter({_, _, '_'}) ->
+   [];
+% filter({<<"geo_point">>, ElasticKey, Pattern}) ->
+%    elastic_geo_distance(ElasticKey, Pattern);
+% filter({Type, ElasticKey, Pattern}) ->
+%    elastic_filter(Type, ElasticKey, Pattern);
 filter(_) ->
    [].
+
+
+%%
+%%
+elastic_query_string(ElasticKey, Value)
+ when not is_list(Value) ->
+   %% range filter is encoded as list at datalog: [{'>', ...}, ...]
+   [#{query_string => #{default_field => ElasticKey, 'query' => Value}}];
+
+elastic_query_string(ElasticKey, [H | _] = Value)
+ when not is_tuple(H) ->
+   [#{query_string => #{default_field => ElasticKey, 'query' => scalar:s(lists:join(<<" AND ">>, Value))}}];
+
+elastic_query_string(_, _) ->
+   []. 
+
+
+%  when is_atom(DatalogKey)  ->
+%    case Pattern of
+%       %% range filter is encoded as list at datalog: [{'>', ...}, ...]
+%       #{DatalogKey := Value} when not is_list(Value) ->
+%          [#{query_string => #{default_field => ElasticKey, 'query' => Value}}];
+%       #{DatalogKey := [H | _] = Value} when not is_tuple(H) ->
+%          [#{query_string => #{default_field => ElasticKey, 'query' => scalar:s(lists:join(<<" AND ">>, Value))}}];
+%       _ ->
+%          [#{exists => #{field => ElasticKey}}]
+%    end;
+
+% elastic_query_string(DatalogVal, ElasticKey, _) ->
+%    [#{query_string => #{default_field => ElasticKey, 'query' => DatalogVal}}].
 
 
 %%
@@ -89,22 +157,6 @@ elastic_match(Type, DatalogKey, ElasticKey, Pattern)
 elastic_match(_Type, DatalogVal, ElasticKey, _) ->
    [#{match => #{ElasticKey => DatalogVal}}].
 
-%%
-%%
-elastic_query_string(DatalogKey, ElasticKey, Pattern)
- when is_atom(DatalogKey)  ->
-   case Pattern of
-      %% range filter is encoded as list at datalog: [{'>', ...}, ...]
-      #{DatalogKey := Value} when not is_list(Value) ->
-         [#{query_string => #{default_field => ElasticKey, 'query' => Value}}];
-      #{DatalogKey := [H | _] = Value} when not is_tuple(H) ->
-         [#{query_string => #{default_field => ElasticKey, 'query' => scalar:s(lists:join(<<" AND ">>, Value))}}];
-      _ ->
-         [#{exists => #{field => ElasticKey}}]
-   end;
-
-elastic_query_string(DatalogVal, ElasticKey, _) ->
-   [#{query_string => #{default_field => ElasticKey, 'query' => DatalogVal}}].
 
 
 %%
@@ -145,7 +197,7 @@ elastic_geo_distance(DatalogKey, ElasticKey, Pattern) ->
 heap(Head, #{'@' := Seq}, Stream) ->
    S = [X || #{'_' := [X | _]} <- Seq, lists:member(X, Head)],
    P = [{X, Y, scalar:s(Type)} || #{'@' := Type, '_' := [_, X, Y | _]} <- Seq, lists:member(Y, Head)],
-   K = [X || #{'@' := 'xsd:string', '_' := [_, _, _, X]} <- Seq, lists:member(X, Head)],
+   K = [X || #{'_' := [_, _, _, X]} <- Seq, lists:member(X, Head)],
    stream:map(
       fun(#{<<"_source">> := Json, <<"_score">> := Score}) ->
          decode_k(Score, decode_p(Json, decode_s(Json, #{}, S), P), K)

@@ -1,9 +1,9 @@
 {"1.1.0",
 [{<<"datalog">>,
   {git,"https://github.com/fogfish/datalog",
-       {ref,"cc3a66afad86e5d065f2d62816b1c066b56593c4"}},
+       {ref,"8c9f7a9d6039d4a39eb21a46f745cbe490d4a8cc"}},
   0},
- {<<"datum">>,{pkg,<<"datum">>,<<"4.3.2">>},0},
+ {<<"datum">>,{pkg,<<"datum">>,<<"4.3.3">>},0},
  {<<"esio">>,
   {git,"https://github.com/fogfish/esio",
        {ref,"c8f263aec1b0ad7efcbd3c340f45f93abcfd2445"}},
@@ -47,7 +47,7 @@
   1}]}.
 [
 {pkg_hash,[
- {<<"datum">>, <<"841549936326B2D660D267D52B3DC7B16457CC174CBACF57E655D79F4BAB924E">>},
+ {<<"datum">>, <<"BD291DE5235F7C1E59C48E46CD60A2389141A86B81C651065CC9D3A36A416990">>},
  {<<"goldrush">>, <<"F06E5D5F1277DA5C413E84D5A2924174182FB108DABB39D5EC548B27424CD106">>},
  {<<"jsx">>, <<"D2F6E5F069C00266CAD52FB15D87C428579EA4D7D73A33669E12679E203329DD">>},
  {<<"lager">>, <<"9D29C5FF7F926D25ECD9899990867C9152DCF34EEE65BAC8EC0DFC0D16A26E0C">>},

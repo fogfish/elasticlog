@@ -29,6 +29,8 @@
    append_/2,
    append_/3,
 
+   stream/2,
+
    p/1,
    c/1,
    horn/2,
@@ -90,6 +92,12 @@ append_(Sock, Fact, Flag) ->
 
 
 %%
+%% datalog stream generator
+
+stream(Keys, Head) ->
+   elasticlog_q:stream(Keys, Head).
+
+%%
 %% parse datalog query
 p(Datalog) ->
    datalog:pflat(Datalog).
@@ -98,6 +106,9 @@ p(Datalog) ->
 %% compile native query
 c(Datalog) ->
    datalog:cflat(elasticlog_q, Datalog).
+
+
+
 
 
 %%
