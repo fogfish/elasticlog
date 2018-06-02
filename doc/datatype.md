@@ -9,7 +9,7 @@ Knowledge statements contain scalar objects -- literals. Literals are either lan
 
 Lang | Data type
 ---  | ---
-Erlang | `-type {iri, uri()} | {iri, prefix(), suffix()}.`
+Erlang | `-type {iri, uri()} \| {iri, prefix(), suffix()}.`
 Semantic | `?XSD_ANYURI`
 Elastic | `keyword`
 Datalog | `xsd:anyURI(...)`
@@ -80,7 +80,7 @@ The value is either true or false, representing a logic values
 
 Lang | Data type
 ---  | ---
-Erlang | `-type true | false.`
+Erlang | `-type true \| false.`
 Semantic | `?XSD_BOOLEAN`
 Elastic | `boolean`
 Datalog | `xsd:boolean(...)`
