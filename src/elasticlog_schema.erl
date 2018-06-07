@@ -31,7 +31,7 @@ schema(Schema)
 schema(Schema)
  when is_list(Schema) ->
    [
-      {<<"s">>, #{type => keyword}}
+      {<<"rdf:subject">>, #{type => keyword}}
      |[{key(semantic:compact(P)), typeof(semantic:compact(Type))} || {P, Type} <- Schema]
    ].
 
@@ -93,4 +93,5 @@ isa(<<"double">>) -> ?XSD_DECIMAL;
 isa(<<"boolean">>) -> ?XSD_BOOLEAN;
 isa(<<"date">>) -> ?XSD_DATETIME;
 isa(<<"geo_point">>) -> ?GEORSS_HASH.
+
 

@@ -22,19 +22,19 @@ encode(Type, List)
 encode(?XSD_ANYURI, Iri) -> 
    encode_iri(Iri);
 
-encode(?XSD_DATETIME, Val) -> 
+encode(?XSD_DATETIME, {_, _, _} = Val) -> 
    scalar:s(tempus:encode(Val));
 
-encode(?XSD_DATE, Val) -> 
+encode(?XSD_DATE, {_, _, _} = Val) -> 
    scalar:s(tempus:encode(Val));
 
-encode(?XSD_TIME, Val) -> 
+encode(?XSD_TIME, {_, _, _} = Val) -> 
    scalar:s(tempus:encode(Val));
 
-encode(?XSD_YEARMONTH, Val) -> 
+encode(?XSD_YEARMONTH, {_, _, _} = Val) -> 
    scalar:s(tempus:encode(Val));
 
-encode(?XSD_YEAR, Val) -> 
+encode(?XSD_YEAR, {_, _, _} = Val) -> 
    scalar:s(tempus:encode(Val));
 
 encode(_, Val) -> 
