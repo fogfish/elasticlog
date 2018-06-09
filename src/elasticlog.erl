@@ -100,12 +100,12 @@ stream(Keys, Head) ->
 %%
 %% parse datalog query
 p(Datalog) ->
-   datalog:pflat(Datalog).
+   datalog:p(Datalog).
 
 %%
 %% compile native query
 c(Datalog) ->
-   datalog:cflat(elasticlog_q, Datalog).
+   datalog:c(elasticlog_q, Datalog, [{return, maps}]).
 
 
 
