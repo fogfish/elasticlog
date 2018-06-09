@@ -1,7 +1,7 @@
 {"1.1.0",
 [{<<"datalog">>,
   {git,"https://github.com/fogfish/datalog",
-       {ref,"f4e443bd52e762baa9b9ec7bdebdd0928e5ee9b7"}},
+       {ref,"412815ba20446f22166118c1930edf42d69f2a81"}},
   0},
  {<<"datum">>,{pkg,<<"datum">>,<<"4.3.3">>},0},
  {<<"esio">>,
