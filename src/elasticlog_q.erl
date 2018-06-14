@@ -23,13 +23,13 @@
 -export([stream/2]).
 
 
-stream(Keys, Head) ->
+stream([Bucket|Keys], Head) ->
    fun(Sock) ->
       [identity ||
          schema(Sock, Keys),
          Schema <- lists:zip3(_, Keys, Head),
          q(Schema),
-         esio:stream(Sock, _),
+         esio:stream(Sock, Bucket, _),
          head(Schema, _)
       ]
    end.

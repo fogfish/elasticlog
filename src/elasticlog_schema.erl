@@ -92,6 +92,7 @@ isa(<<"long">>) -> ?XSD_INTEGER;
 isa(<<"double">>) -> ?XSD_DECIMAL;
 isa(<<"boolean">>) -> ?XSD_BOOLEAN;
 isa(<<"date">>) -> ?XSD_DATETIME;
-isa(<<"geo_point">>) -> ?GEORSS_HASH.
+isa(<<"geo_point">>) -> ?GEORSS_HASH;
+isa(_) -> undefined.
 
 
