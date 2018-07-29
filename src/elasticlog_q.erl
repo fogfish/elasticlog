@@ -36,7 +36,7 @@ stream([Bucket|Keys], Head) ->
 
 schema(Sock, Keys) ->
    {ok, Schema} = elasticlog:schema(Sock),
-   [lens:get(lens:pair(semantic:compact(Key)), Schema) || Key <- Keys].
+   [lens:get(lens:pair(Key), Schema) || Key <- Keys].
 
 head(Schema, Stream) ->
    stream:map(

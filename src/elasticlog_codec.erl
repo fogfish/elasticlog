@@ -82,11 +82,12 @@ decode(_, Val) ->
 
 %%
 decode_iri(<<Iri/binary>>) ->
-   semantic:compact(Iri);
+   case semantic:compact(Iri) of
+      undefined ->
+         semantic:absolute(Iri);
+      Semantic ->
+         Semantic
+   end;
 decode_iri(Iri) ->
    semantic:absolute(Iri).
-
-
-
-
 

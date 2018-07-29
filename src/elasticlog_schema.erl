@@ -82,9 +82,14 @@ typeof({iri, ?LANG, _}) -> #{type => text}.
 %%
 %%
 predicate(Json) ->
-   {_, Schema} = hd(maps:to_list(Json)),
-   Properties  = lens:get(lens:c(lens:at(<<"mappings">>), lens:at(<<"_doc">>), lens:at(<<"properties">>)), Schema),
-   [{semantic:compact(P), isa(lens:get(lens:at(<<"type">>), Type))} || {P, Type} <- maps:to_list(Properties)].
+   lists:flatten([schema_to_rdf(X) || X <- maps:to_list(Json)]).
+
+schema_to_rdf({_, Schema}) ->
+   Properties  = lens:get(lens_properties(), Schema),
+   [{P, isa(lens:get(lens:at(<<"type">>), Type))} || {P, Type} <- maps:to_list(Properties)].
+
+lens_properties() ->
+   lens:c(lens:at(<<"mappings">>, #{}), lens:at(<<"_doc">>, #{}), lens:at(<<"properties">>, #{})).
 
 isa(<<"keyword">>) -> ?XSD_ANYURI;
 isa(<<"text">>) -> ?XSD_STRING;
@@ -94,5 +99,6 @@ isa(<<"boolean">>) -> ?XSD_BOOLEAN;
 isa(<<"date">>) -> ?XSD_DATETIME;
 isa(<<"geo_point">>) -> ?GEORSS_HASH;
 isa(_) -> undefined.
+
 
 
