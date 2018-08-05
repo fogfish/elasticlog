@@ -16,48 +16,140 @@
 %% @doc
 %%   datalog sigma function supports knowledge statement only.
 -module(elasticlog_q).
+
+-compile({parse_transform, category}).
 -include_lib("semantic/include/semantic.hrl").
 
--export([
-   sigma/1
-]).
+-export([stream/2]).
 
-%%
-%% build sigma function
-sigma(Pattern) ->
+
+stream([Bucket|Keys], Head) ->
    fun(Sock) ->
-      fun(Stream) ->
-         sigma(Sock, datalog:bind(stream:head(Stream), Pattern))
-      end
-   end. 
+      [identity ||
+         schema(Sock, Keys),
+         Schema <- lists:zip3(_, Keys, Head),
+         q(Schema),
+         esio:stream(Sock, Bucket, _),
+         head(Schema, _)
+      ]
+   end.
 
-sigma(Sock, #{'@' := IRI} = Pattern) ->
-   #rdf_seq{subclass = SubClass} = Spec = semantic:lookup(IRI),
-   {Head, Query} = elasticlog_q5x:build(Spec, Pattern),
-   Stream = esio:stream(Sock, to_json(SubClass), Query), 
-   heap(Spec, Head, Stream).
+schema(Sock, Keys) ->
+   {ok, Schema} = elasticlog:schema(Sock),
+   [maps:get(Key, Schema) || Key <- Keys].
 
-%%
-%% convert stream head (json object) to datalog heap
-heap(#rdf_seq{seq = Seq}, Head, Stream) ->
-   Spec = lists:filter(fun({_, H}) -> H /= '_' end, lists:zip(Seq, Head)),
+head(Schema, Stream) ->
    stream:map(
-      fun(#{<<"_source">> := Json}) ->
-         lists:foldl(fun(X, Heap) -> json_to_heap(X, Heap, Json) end, #{}, Spec)   
+      fun(#{<<"_source">> := Json, <<"_score">> := Score}) ->
+         lists:map(
+            fun({Type, Key, _}) ->
+               elasticlog_codec:decode(Type, lens:get(lens:at(Key), Json))
+            end,
+            Schema
+         )
       end,
       Stream
    ).
 
-json_to_heap({#rdf_property{id = IRI}, Key}, Heap, Json) ->
-   case maps:get(to_json(IRI), Json, undefined) of
-      undefined ->
-         Heap;
-      Value ->
-         Heap#{Key => Value}
-   end.
+%%
+%%
+q(Pattern) ->
+   io:format("==> ~p~n", [Pattern]),
+
+   Matches = lists:flatten(lists:map(fun(X) -> match(X) end, Pattern)),
+   Filters = lists:flatten(lists:map(fun(X) -> filter(X) end, Pattern)),
+   debug(#{'query' => #{bool => #{must => Matches, filter => Filters}}}).
 
 %%
 %%
-to_json({iri, Prefix, Suffix}) ->
-   <<Prefix/binary, $:, Suffix/binary>>.
+debug(Json) ->
+   error_logger:info_msg("[elasticlog] query: ~s~n", [jsx:encode(Json)]),
+   Json.
+
+%%
+%%
+match({_, ElasticKey, '_'}) ->
+   [#{exists => #{field => ElasticKey}}];
+match({_, ElasticKey, undefined}) ->
+   [#{exists => #{field => ElasticKey}}];   
+match({?GEORSS_HASH, _, _}) ->
+   %% Geo fields do not support exact searching, use dedicated geo queries instead
+   [];
+match({?XSD_STRING, ElasticKey, Pattern}) -> 
+   elastic_query_string(ElasticKey, Pattern);
+match({Type, ElasticKey, Pattern}) ->
+   elastic_match(Type, ElasticKey, Pattern);
+match(_) ->
+   [].
+
+%%
+%%
+filter({_, _, '_'}) ->
+   [];
+filter({?GEORSS_HASH, ElasticKey, Pattern}) ->
+   elastic_geo_distance(ElasticKey, Pattern);
+filter({Type, ElasticKey, Pattern}) ->
+   elastic_filter(Type, ElasticKey, Pattern);
+filter(_) ->
+   [].
+
+
+%%
+%%
+elastic_query_string(ElasticKey, Value)
+ when not is_list(Value) ->
+   %% range filter is encoded as list at datalog: [{'>', ...}, ...]
+   [#{query_string => #{default_field => ElasticKey, 'query' => Value}}];
+
+elastic_query_string(ElasticKey, [H | _] = Value)
+ when not is_tuple(H) ->
+   [#{query_string => #{default_field => ElasticKey, 'query' => scalar:s(lists:join(<<" AND ">>, Value))}}];
+
+elastic_query_string(_, _) ->
+   []. 
+
+
+%%
+%%
+elastic_match(Type, ElasticKey, Value)
+ when not is_list(Value) ->
+   %% range filter is encoded as list at datalog: [{'>', ...}, ...]
+   [#{match => #{ElasticKey => elasticlog_codec:encode(Type, Value)}}];
+
+elastic_match(Type, ElasticKey, [H | _] = Value)
+ when not is_tuple(H) ->
+   [#{match => #{ElasticKey => elasticlog_codec:encode(Type, X)}} || X <- Value];
+
+elastic_match(_, _, _) ->
+   [].
+
+
+%%
+%%
+elastic_filter(Type, ElasticKey, [H | _] = Value)
+ when is_tuple(H) ->
+   %% range filter is encoded as list at datalog: [{'>', ...}, ...]
+   #{range => 
+      #{ElasticKey => maps:from_list([{elastic_compare(Op), elasticlog_codec:encode(Type, X)} || {Op, X} <- Value])}
+   };
+
+elastic_filter(_, _, _) ->
+   [].
+
+
+%%
+%%
+elastic_compare('>')  -> gt;
+elastic_compare('>=') -> gte; 
+elastic_compare('<')  -> lt;
+elastic_compare('=<') -> lte.
+
+%%
+%%
+elastic_geo_distance(ElasticKey, [GeoHash, Radius]) ->
+   %% geo range filter is encoded as list at datalog: [hash, radius]
+   #{geo_distance => #{distance => Radius, ElasticKey => GeoHash}};
+
+elastic_geo_distance(_, _) ->
+   [].
 

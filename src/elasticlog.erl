@@ -14,7 +14,7 @@
 %%   limitations under the License.
 %%
 %% @doc
-%%   elastic search datalog
+%%   datalog interface for elastic search
 -module(elasticlog).
 
 -compile({parse_transform, category}).
@@ -23,65 +23,100 @@
 -export([
    schema/1,
    schema/2,
-   c/1,
-   horn/2,
+   schema/3,
+   append/2,
+   append/3,
+   append_/2,
+   append_/3,
+   stream/2,
    encode/1,
    decode/1
 ]).
 
 %%
 %%
+-type sock()   :: _.
+-type schema() :: #{attr() => type()}.
+-type attr()   :: semantic:uri().
+-type type()   :: semantic:compact().
+
+%%
+%%
 start() ->
-   application:ensure_all_started(elasticlog).
+   application:ensure_all_started(?MODULE).
+
+%%
+%% read semantic schema
+-spec schema(sock()) -> datum:either( schema() ).
+
+schema(Sock) ->
+   [either ||
+      esio:schema(Sock),
+      cats:unit(elasticlog_schema:predicate(_))
+   ].
 
 %%
 %% build schema for semantic data
--spec schema([semantic:iri()]) -> #{}.
--spec schema([semantic:iri()], [_]) -> #{}.
+-spec schema(sock(), schema()) -> datum:either().
+-spec schema(sock(), schema(), [_]) -> datum:either().
 
-schema(Spec) ->
-   schema(Spec, []).
+schema(Sock, Schema) ->
+   schema(Sock, Schema, []).
 
-schema(Spec, Opts) ->
-   elasticlog_schema:new(Spec, Opts).
+schema(Sock, Schema, Opts) ->
+   esio:schema(Sock, elasticlog_schema:new(Schema, Opts)).
+
+
+%%
+%% append knowledge fact 
+-spec append(sock(), semantic:spo()) -> datum:either( semantic:iri() ).
+-spec append(sock(), semantic:spo(), timeout()) -> datum:either( semantic:iri() ).
+
+append(Sock, Fact) ->
+   append(Sock, Fact, 30000).
+
+append(Sock, Fact, Timeout) ->
+   elasticlog_nt:append(Sock, Fact, Timeout).
+
+
+-spec append_(sock(), semantic:spo()) -> ok | reference().
+-spec append_(sock(), semantic:spo(), boolean()) -> ok | reference().
+
+append_(Sock, Fact) ->
+   append_(Sock, Fact, false).
+
+append_(Sock, Fact, Flag) ->
+   elasticlog_nt:append_(Sock, Fact, Flag).
 
 
 %%
-%% compile textual query
-c(Datalog)
- when is_map(Datalog) ->
-   datalog:c(elasticlog_q, Datalog);
-c(Datalog)
- when is_list(Datalog) ->
-   c(datalog:p(Datalog)).
+%% datalog stream generator
+stream(Keys, Head) ->
+   elasticlog_q:stream(Keys, Head).
 
-%%
-%% declare horn clause using native query syntax
-%%  Example:
-%%    datalog:q(
-%%       #{x => ...},     % define query goal
-%%       elasticlog:horn([x, y], [
-%%          #{'@' => ..., '_' => [x,y,z], z => ...}
-%%       ])
-%%    ).
-horn(Head, List) ->
-   datalog:c(elasticlog_q, #{q => [Head | List]}).
 
 %%
 %% 
 -spec encode(_) -> _.
 
-encode(#{<<"@id">> := Id} = Json0) ->
-   Json1 = maps:remove(<<"@id">>, Json0),
-   Json1#{<<"rdf:id">> => Id}.
+encode(#{<<"@id">> := Id} = Json) ->
+   [identity ||
+      maps:remove(<<"@id">>, Json),
+      cats:unit(_#{<<"rdf:id">> => Id})
+   ];
+
+encode(#{<<"rdf:id">> := _} = Json) ->
+   Json.
    
 %%
 %%
 -spec decode(_) -> _.
 
-decode(#{<<"rdf:id">> := Id} = Json0) ->
-   Json1 = maps:remove(<<"rdf:id">>, Json0),
-   Json1#{<<"@id">> => Id};
+decode(#{<<"rdf:id">> := Id} = Json) ->
+   [identity ||
+      maps:remove(<<"rdf:id">>, Json),
+      cats:unit(_#{<<"@id">> => Id})
+   ];
 
 decode(#{<<"@id">> := _} = Json) ->
    Json.
