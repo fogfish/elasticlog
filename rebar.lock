@@ -3,7 +3,7 @@
   {git,"https://github.com/fogfish/datalog",
        {ref,"412815ba20446f22166118c1930edf42d69f2a81"}},
   0},
- {<<"datum">>,{pkg,<<"datum">>,<<"4.3.3">>},0},
+ {<<"datum">>,{pkg,<<"datum">>,<<"4.3.5">>},0},
  {<<"esio">>,
   {git,"https://github.com/fogfish/esio",
        {ref,"9117e60e432d7f17fca3839a1b396cfda82ec053"}},
@@ -15,7 +15,7 @@
  {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.9">>},2},
  {<<"hash">>,
   {git,"https://github.com/fogfish/hash",
-       {ref,"74190af64061d28f8d6cff460582751bd68c41a5"}},
+       {ref,"a1b9101189e115b4eabbe941639f3c626614e986"}},
   0},
  {<<"hornlog">>,
   {git,"https://github.com/fogfish/hornlog",
@@ -39,7 +39,7 @@
  {<<"pipe">>,{pkg,<<"pipes">>,<<"1.7.0">>},2},
  {<<"semantic">>,
   {git,"https://github.com/fogfish/semantic",
-       {ref,"7b33000cf1a6ae5aa94a1f6c92538eb622da69c4"}},
+       {ref,"0e19f11001e94e68ff1187d214e99e926450702c"}},
   0},
  {<<"uid">>,
   {git,"https://github.com/fogfish/uid",
@@ -47,7 +47,7 @@
   1}]}.
 [
 {pkg_hash,[
- {<<"datum">>, <<"BD291DE5235F7C1E59C48E46CD60A2389141A86B81C651065CC9D3A36A416990">>},
+ {<<"datum">>, <<"18DE79DD128A46AC824B3EB3FCB4354BD7E0FBA242CFE1AECA6AB7B79147F785">>},
  {<<"goldrush">>, <<"F06E5D5F1277DA5C413E84D5A2924174182FB108DABB39D5EC548B27424CD106">>},
  {<<"jsx">>, <<"D2F6E5F069C00266CAD52FB15D87C428579EA4D7D73A33669E12679E203329DD">>},
  {<<"lager">>, <<"9D29C5FF7F926D25ECD9899990867C9152DCF34EEE65BAC8EC0DFC0D16A26E0C">>},

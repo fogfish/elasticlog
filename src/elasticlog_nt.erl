@@ -18,7 +18,7 @@ append(Sock, #{s := S, p := P, o:= O, type := Type}, Timeout) ->
    JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
    JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
    JsonO = elasticlog_codec:encode(Type, O),
-   esio:update(Sock, unique_key(JsonS), #{s => JsonS, JsonP => JsonO}, Timeout).
+   esio:update(Sock, unique_key(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Timeout).
 
 %%
 %%
@@ -29,7 +29,7 @@ append_(Sock, #{s := S, p := P, o:= O, type := Type}, Flag) ->
    JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
    JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
    JsonO = elasticlog_codec:encode(Type, O),
-   esio:update_(Sock, unique_key(JsonS), #{s => JsonS, JsonP => JsonO}, Flag).
+   esio:update_(Sock, unique_key(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Flag).
 
 
 

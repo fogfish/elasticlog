@@ -36,7 +36,7 @@ stream([Bucket|Keys], Head) ->
 
 schema(Sock, Keys) ->
    {ok, Schema} = elasticlog:schema(Sock),
-   [lens:get(lens:pair(Key), Schema) || Key <- Keys].
+   [maps:get(Key, Schema) || Key <- Keys].
 
 head(Schema, Stream) ->
    stream:map(
@@ -54,6 +54,8 @@ head(Schema, Stream) ->
 %%
 %%
 q(Pattern) ->
+   io:format("==> ~p~n", [Pattern]),
+
    Matches = lists:flatten(lists:map(fun(X) -> match(X) end, Pattern)),
    Filters = lists:flatten(lists:map(fun(X) -> filter(X) end, Pattern)),
    debug(#{'query' => #{bool => #{must => Matches, filter => Filters}}}).

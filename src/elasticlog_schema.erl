@@ -31,18 +31,9 @@ schema(Schema)
 schema(Schema)
  when is_list(Schema) ->
    [
-      {<<"rdf:subject">>, #{type => keyword}}
-     |[{key(semantic:compact(P)), typeof(semantic:compact(Type))} || {P, Type} <- Schema]
+      {<<"rdf:id">>, #{type => keyword}}
+     |[{P, typeof(semantic:compact(Type))} || {P, Type} <- Schema]
    ].
-
-%%
--spec key( semantic:iri() ) -> binary().
-
-key({iri, Prefix, Suffix}) ->
-   <<Prefix/binary, $:, Suffix/binary>>;
-key({iri, IRI}) ->
-   IRI.
-
 
 %%
 %%
@@ -82,7 +73,7 @@ typeof({iri, ?LANG, _}) -> #{type => text}.
 %%
 %%
 predicate(Json) ->
-   lists:flatten([schema_to_rdf(X) || X <- maps:to_list(Json)]).
+   maps:from_list(lists:flatten([schema_to_rdf(X) || X <- maps:to_list(Json)])).
 
 schema_to_rdf({_, Schema}) ->
    Properties  = lens:get(lens_properties(), Schema),

@@ -7,92 +7,231 @@
 
 ## Inspiration 
 
-Declarative logic programs is an alternative approach to extract knowledge facts in deductive databases. It is designed for applications that uses a large number of ground facts persisted in external storage. The library implements experimental support of datalog language to query knowledge facts stored in Elastic Search using [elasticnt](https://github.com/fogfish/elasticnt) library.
+Declarative logic programs is an alternative approach to extract knowledge facts in deductive databases. It is designed for applications that uses a large number of ground facts persisted in external storage. The library implements experimental support of datalog language to query knowledge facts stored in Elastic Search.
+
 
 ## Getting started
 
-The latest version of the library is available at its master branch. All development, including new features and bug fixes, take place on the master branch using forking and pull requests as described in contribution guidelines.
-
-To use and develop the library you need:
-* Erlang/OTP 18.x or later
-* rebar3
-* Elastic Search
-* elasticnt
+The latest version of the library is available at its `master` branch. All development, including new features and bug fixes, take place on the `master` branch using forking and pull requests as described in contribution guidelines.
 
 
 ### Installation
 
-If you use `rebar` you can include the library in your project with
-```
+If you use `rebar3` you can include the library in your project with
+
+```erlang
 {elasticlog, ".*",
    {git, "https://github.com/fogfish/elasticlog", {branch, master}}
 }
 ```
 
+### Usage
 
-### Running
+The library requires Elastic search as a storage back-end. Use the docker container for development purpose.
 
-See [elasticnt](https://github.com/fogfish/elasticnt) for instructions to intake data into Elastic Search cluster.
+```bash
+docker run -it -p 9200:9200 fogfish/elasticsearch:6.2.3
+```
 
 Build library and run the development console
-```
-make
-make run
+
+```bash
+make && make run
 ```
 
-Let's run a simple datalog program to deduct data from the cluster
+Let's **create** a new index suitable for linked data and upload example [movie dataset](https://github.com/fogfish/datalog/blob/master/priv/imdb.nt).
+
 ```erlang
+elasticlog:start().
+
 %% 
-%% start elastic search drivers
-esio:start().
+%% establish connection with `imdb` index 
+{ok, Sock} = esio:socket("http://localhost:9200/imdb").
 
 %%
-%% open cluster connection, define implicit index identity
-{ok, Sock} = esio:socket("http://192.168.99.100:9200/nt").
+%% deploy a schema
+elasticlog:schema(Sock, #{
+   <<"schema:name">> => <<"xsd:string">>,
+   <<"schema:born">> => <<"xsd:string">>,
+   <<"schema:death">> => <<"xsd:string">>,
+   <<"schema:title">> => <<"xsd:string">>,
+   <<"schema:year">> => <<"xsd:integer">>,
+   <<"schema:director">> => <<"xsd:anyURI">>,
+   <<"schema:cast">> => <<"xsd:anyURI">>,
+   <<"schema:sequel">> => <<"xsd:anyURI">>
+}).
 
 %%
-%% compile query, using datalog program
-Dlog = elasticlog:c("nt(S, P, O) :- f(S, P, O), O = \"Example\".").
+%% open a stream to example dataset
+Stream = semantic:nt(filename:join([code:priv_dir(datalog), "imdb.nt"])).
 
 %%
-%% evaluate program, using cluster connection
-datalog:q(Dlog, Sock).
-
-
-%%
-%% compile query, using native syntax of data log program
-Elog = datalog:q(
-   #{o => <<"Example">>},
-   elasticlog:horn([s,p,o], [
-      #{'@' => p, '_' => [s,p,o]}
-   ])
+%% upload dataset
+%% Note: elasticlog group all facts about same subject into JSON document
+%%       therefore preprocessing of N-triple stream is required.
+%%       A raw stream of facts needs to be transformed into type-safe format
+%%       and grouped together.
+stream:foreach(
+   fun(Fact)-> elasticlog:append(Sock, Fact) end,
+   semantic:fold(
+      stream:map(fun semantic:typed/1, Stream)
+   )
 ).
+```
+
+tbd about `.stream(...)`
+
+
+**Basic queries**
+
+```erlang
+%%
+%% define a query goal to match a person with `name` equal to `Ridley Scott`.
+Q = "?- person(_, \"Ridley Scott\").
+person(id, name) :- 
+   .stream(\"imdb\", \"rdf:id\", \"schema:name\").".
 
 %%
-%% evaluate program, using cluster connection
-Elog(Sock).
-``` 
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
 
-### Supported datalog predicates
+%%
+%% apply the function to dataset and materialize a stream of tuple, it returns
+%% [
+%%    [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
+%% ]
+stream:list(F(Sock)).
+```
 
-#### `f(...)` pattern match 
+**Data patterns**
 
-The predicate matches the knowledge statement and lift unbound variable. There are variants of predicate:
-* `f(S, P, O)` matches the knowledge statement (subject, predicate object) 
-* `f(S, P, O, C)` matches the knowledge statement and its credibility  
-* `f(S, P, O, C, K)` matches the knowledge statement, its credibility and K-order value 
+```erlang
+%%
+%% define a query to discover all movies produces in 1987
+Q = "?- h(_, _). 
+movie(id, title, year) :- 
+   .stream(\"imdb\", \"rdf:id\", \"schema:title\", \"schema:year\").
 
+h(id, title) :- 
+   movie(id, title, 1987).".
 
-#### `geo(...)` geohash match  
+%%
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
 
-The predicate matches the knowledge statement of geohash type (object is GeoHash) .
-* `geo(S, P, O, R)` matches the knowledge statement at given location (`O`) within the radius `R`
-* `geo(S, P, Lat, Lng, R)` matches the knowledge statement at given location (`Lat`, `Lng`) within the radius `R`
+%%
+%% apply the function to dataset and materialize a stream of tuple, it returns
+%% [
+%%    [{iri,<<"http://example.org/movie/203">>}, <<"Lethal Weapon">>],
+%%    [{iri,<<"http://example.org/movie/204">>}, <<"RoboCop">>],
+%%    [{iri,<<"http://example.org/movie/202">>}, <<"Predator">>]
+%% ]
+stream:list(F(Sock)).
+```
 
+**Predicates**
+
+```erlang
+%%
+%% define a query to discover all movies produces  before 1984
+Q = "?- h(_, _). 
+movie(title, year) :- 
+   .stream(\"imdb\", \"schema:title\", \"schema:year\").
+
+h(title, year) :- 
+   movie(title, year), year < 1984.".
+
+%%
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
+
+%%
+%%
+%% apply the function to dataset and materialize a stream of tuple, it returns
+%% [
+%%    [<<"First Blood">>, 1982],
+%%    [<<"Mad Max">>, 1979],
+%%    [<<"Mad Max 2">>, 1981],
+%%    [<<"Alien">>, 1979]
+%% ]
+stream:list(F(Sock)).
+```
+
+**Join relations**
+
+```erlang
+%%
+%% define a query to discover actors of all movies produced before 1984
+Q = "?- h(_, _). 
+movie(title, year) :- 
+   .stream(\"imdb\", \"schema:title\", \"schema:year\", \"schema:cast\").
+
+person(id, name) :- 
+   .stream(\"imdb\", \"rdf:id\", \"schema:name\").
+
+h(title, name) :- 
+   movie(title, year, cast), 
+   .flat(cast), 
+   person(cast, name), 
+   year < 1984.".
+
+%%
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
+
+%%
+%%
+%% apply the function to dataset and materialize a stream of tuple, it returns
+%% [
+%%    [<<"First Blood">>,<<"Sylvester Stallone">>],
+%%    [<<"First Blood">>,<<"Richard Crenna">>],
+%%    [<<"First Blood">>,<<"Brian Dennehy">>],
+%%    [<<"Mad Max">>,<<"Mel Gibson">>],
+%%    [<<"Mad Max">>,<<"Steve Bisley">>],
+%%    [<<"Mad Max">>,<<"Joanne Samuel">>],
+%%    [<<"Mad Max 2">>,<<"Mel Gibson">>],
+%%    [<<"Mad Max 2">>,<<"Michael Preston">>],
+%%    [<<"Mad Max 2">>,<<"Bruce Spence">>],
+%%    [<<"Alien">>,<<"Tom Skerritt">>],
+%%    [<<"Alien">>,<<"Sigourney Weaver">>],
+%%    [<<"Alien">>,<<"Veronica Cartwright">>]
+%% ]
+stream:list(F(Sock)).
+```
+
+```erlang
+%%
+%% define a query to discover all movies with Sylvester Stallone
+Q = "?- h(_). 
+movie(title, cast) :- 
+   .stream(\"imdb\", \"schema:title\", \"schema:cast\").
+
+person(id, name) :- 
+   .stream(\"imdb\", \"rdf:id\", \"schema:name\").
+
+h(title) :- 
+   person(id, name), 
+   movie(title, id), 
+   name = \"Sylvester Stallone\".".
+
+%%
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
+
+%%
+%%
+%% apply the function to dataset and materialize a stream of tuple, it returns
+%% [
+%%    [<<"First Blood">>],
+%%    [<<"Rambo: First Blood Part II">>],
+%%    [<<"Rambo III">>]
+%% ]
+stream:list(F(Sock)).
+```
 
 ### More Information
+
 * study datalog language and its [Erlang implementation](https://github.com/fogfish/datalog)
-* check [tips and hints](doc/howto.md)
 
 
 ## How to Contribute

@@ -28,19 +28,17 @@
    append/3,
    append_/2,
    append_/3,
-
    stream/2,
-
-   p/1,
-   c/1,
-   horn/2,
    encode/1,
    decode/1
 ]).
 
 %%
 %%
--type sock() :: _.
+-type sock()   :: _.
+-type schema() :: #{attr() => type()}.
+-type attr()   :: semantic:uri().
+-type type()   :: semantic:compact().
 
 %%
 %%
@@ -49,7 +47,7 @@ start() ->
 
 %%
 %% read semantic schema
--spec schema(sock()) -> datum:either(_).
+-spec schema(sock()) -> datum:either( schema() ).
 
 schema(Sock) ->
    [either ||
@@ -59,8 +57,8 @@ schema(Sock) ->
 
 %%
 %% build schema for semantic data
--spec schema(sock(), _) -> datum:either().
--spec schema(sock(), _, [_]) -> datum:either().
+-spec schema(sock(), schema()) -> datum:either().
+-spec schema(sock(), schema(), [_]) -> datum:either().
 
 schema(Sock, Schema) ->
    schema(Sock, Schema, []).
@@ -93,35 +91,9 @@ append_(Sock, Fact, Flag) ->
 
 %%
 %% datalog stream generator
-
 stream(Keys, Head) ->
    elasticlog_q:stream(Keys, Head).
 
-%%
-%% parse datalog query
-p(Datalog) ->
-   datalog:p(Datalog).
-
-%%
-%% compile native query
-c(Datalog) ->
-   datalog:c(elasticlog_q, Datalog, [{return, maps}]).
-
-
-
-
-
-%%
-%% declare horn clause using native query syntax
-%%  Example:
-%%    datalog:q(
-%%       #{x => ...},     % define query goal
-%%       elasticlog:horn([x, y], [
-%%          #{'@' => ..., '_' => [x,y,z], z => ...}
-%%       ])
-%%    ).
-horn(Head, List) ->
-   datalog:c(elasticlog_q, #{q => [Head | List]}).
 
 %%
 %% 
