@@ -79,7 +79,9 @@ stream:foreach(
 ).
 ```
 
-tbd about `.stream(...)`
+Querying and joining semantical data requires translation of facts into n-ary relation. 
+The library implements a σ function (`.stream`) that produces a stream of tuple from any 
+bucket. It takes a name of bucket as first argument followed by predicate names.
 
 
 **Basic queries**
