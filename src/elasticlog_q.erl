@@ -54,17 +54,15 @@ head(Schema, Stream) ->
 %%
 %%
 q(Pattern) ->
-   io:format("==> ~p~n", [Pattern]),
-
    Matches = lists:flatten(lists:map(fun(X) -> match(X) end, Pattern)),
    Filters = lists:flatten(lists:map(fun(X) -> filter(X) end, Pattern)),
-   debug(#{'query' => #{bool => #{must => Matches, filter => Filters}}}).
+   #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
 
 %%
 %%
-debug(Json) ->
-   error_logger:info_msg("[elasticlog] query: ~s~n", [jsx:encode(Json)]),
-   Json.
+% debug(Json) ->
+%    error_logger:info_msg("[elasticlog] query: ~s~n", [jsx:encode(Json)]),
+%    Json.
 
 %%
 %%
