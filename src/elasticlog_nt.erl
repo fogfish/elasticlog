@@ -19,7 +19,16 @@ append(Sock, #{s := S, p := P, o:= O, type := Type}, Timeout) ->
    JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
    JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
    JsonO = elasticlog_codec:encode(Type, O),
-   esio:update(Sock, identity(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Timeout).
+   esio:update(Sock, identity(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Timeout);
+
+append(Sock, #{} = JsonLD, Timeout) ->
+   lists:foldl(
+      fun(Fact, _) ->
+         append(Sock, Fact, Timeout)
+      end,
+      {error, nocontent},
+      semantic:jsonld(JsonLD)
+   ).
 
 %%
 %%
@@ -30,7 +39,16 @@ append_(Sock, #{s := S, p := P, o:= O, type := Type}, Flag) ->
    JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
    JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
    JsonO = elasticlog_codec:encode(Type, O),
-   esio:update_(Sock, identity(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Flag).
+   esio:update_(Sock, identity(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Flag);
+
+append_(Sock, #{} = JsonLD, Flag) ->
+   lists:foldl(
+      fun(Fact, _) ->
+         append_(Sock, Fact, Flag)
+      end,
+      {error, nocontent},
+      semantic:jsonld(JsonLD)
+   ).
 
 
 

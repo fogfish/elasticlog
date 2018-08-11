@@ -35,7 +35,7 @@
  {<<"pipe">>,{pkg,<<"pipes">>,<<"1.7.0">>},2},
  {<<"semantic">>,
   {git,"https://github.com/fogfish/semantic",
-       {ref,"1c20e7c1bbe02c660b9b0f3d32c35622a93e3f04"}},
+       {ref,"ba15538de34a6572722178561d079e9ab672b9fc"}},
   0},
  {<<"uid">>,
   {git,"https://github.com/fogfish/uid",
