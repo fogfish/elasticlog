@@ -18,6 +18,7 @@
 -module(elasticlog).
 
 -compile({parse_transform, category}).
+-include_lib("datum/include/datum.hrl").
 
 -export([start/0]).
 -export([
@@ -30,7 +31,8 @@
    append_/3,
    stream/2,
    encode/1,
-   decode/1
+   decode/1,
+   jsonify/2
 ]).
 
 %%
@@ -96,7 +98,7 @@ stream(Keys, Head) ->
 
 
 %%
-%% 
+%% encodes JSON-LD to storage format
 -spec encode(_) -> _.
 
 encode(#{<<"@id">> := Id} = Json) ->
@@ -109,7 +111,7 @@ encode(#{<<"rdf:id">> := _} = Json) ->
    Json.
    
 %%
-%%
+%% decodes storage format to JSON-LD
 -spec decode(_) -> _.
 
 decode(#{<<"rdf:id">> := Id} = Json) ->
@@ -121,3 +123,27 @@ decode(#{<<"rdf:id">> := Id} = Json) ->
 decode(#{<<"@id">> := _} = Json) ->
    Json.
 
+%%
+%% encodes deducted fact(s) to json format
+jsonify(Schema, #stream{} = Stream) ->
+   stream:map(
+      fun(Fact) ->
+         maps:from_list(lists:zip(Schema, [json_val(X) || X <- Fact]))
+      end,
+      Stream
+   ).
+
+json_val({iri, Uri}) -> 
+   Uri;
+json_val({iri, Prefix, Suffix}) -> 
+   <<Prefix/binary, $:, Suffix/binary>>;
+json_val({_, _, _} = T) -> 
+   scalar:s(tempus:encode(T));
+json_val(Value) when is_atom(Value) -> 
+   scalar:s(Value);
+json_val(Value) when is_float(Value) -> 
+   Value;
+json_val(Value) when is_integer(Value) -> 
+   Value;
+json_val(Value) ->
+   scalar:s(Value).
