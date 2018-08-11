@@ -32,7 +32,8 @@
    stream/2,
    encode/1,
    decode/1,
-   jsonify/2
+   jsonify/2,
+   identity/1
 ]).
 
 %%
@@ -147,3 +148,9 @@ json_val(Value) when is_integer(Value) ->
    Value;
 json_val(Value) ->
    scalar:s(Value).
+
+%%
+%% encode any string to unique knowledge identity
+identity(Key) ->
+   elasticlog_nt:identity(Key).
+
