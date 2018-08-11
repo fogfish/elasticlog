@@ -67,8 +67,41 @@ schema(Sock, Schema) ->
    schema(Sock, Schema, []).
 
 schema(Sock, Schema, Opts) ->
-   esio:schema(Sock, elasticlog_schema:new(Schema, Opts)).
+   [either ||
+      ElasticSchema <- cats:unit( elasticlog_schema:new(Schema, Opts) ),
+      schema_deploy_bucket(Sock, ElasticSchema),
+      schema_deploy_fields(Sock, schema_fields(ElasticSchema))
+   ].
 
+schema_deploy_bucket(Sock, Schema) ->
+   case esio:schema(Sock, maps:with([settings], Schema)) of
+      {ok, _} ->
+         ok;
+      {error, {400, #{<<"error">> := #{<<"type">> := <<"resource_already_exists_exception">>}}}} ->
+         ok;
+      {error, _} = Error ->
+         Error
+   end.
+
+schema_deploy_fields(Sock, []) ->
+   ok;
+schema_deploy_fields(Sock, [Head | Tail]) ->
+   case esio:schema(Sock, Head) of
+      {ok, _} ->
+         schema_deploy_fields(Sock, Tail);
+      {error, _} = Error ->
+         Error
+   end.
+
+schema_fields(Schema) ->
+   [lens:put(lens_schema_properties(Key), Type, #{}) 
+      || {Key, Type} <- maps:to_list(lens:get(lens_schema_properties(), Schema))].
+
+lens_schema_properties() ->
+   lens:c(lens:at(mappings, #{}), lens:at('_doc', #{}), lens:at(properties, #{})).
+
+lens_schema_properties(Key) ->
+   lens:c(lens:at(properties, #{}), lens:at(Key)).
 
 %%
 %% append knowledge fact 
