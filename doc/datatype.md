@@ -142,13 +142,10 @@ The geographical coordinates are hashed using GeoHash, ensuring 3.7cm x 1.8cm pr
 
 Lang | Data type
 ---  | ---
-Erlang | `-type binary().`
-Semantic | `?GEORSS_POINT`
-|| `?GEORSS_HASH`
-Elastic | `geo_point`
-Datalog | `georss:point(...)`
-|| `georss:hash(...)`
-RDF | xmlns:xsd="http://www.georss.org/georss/point"
-|| xmlns:xsd="http://www.georss.org/georss/hash"
+Erlang | `-type #{<<"type">> => binary(), <<"coordinates">> => _}.`
+Semantic | `?GEORSS_JSON`
+Elastic | `geo_shape`
+Datalog | `georss:json(...)`
+RDF | xmlns:xsd="http://www.georss.org/georss/json"
 
 

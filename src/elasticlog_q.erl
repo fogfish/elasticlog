@@ -40,7 +40,7 @@ schema(Sock, Keys) ->
 
 head(Schema, Stream) ->
    stream:map(
-      fun(#{<<"_source">> := Json, <<"_score">> := Score}) ->
+      fun(#{<<"_source">> := Json, <<"_score">> := _Score}) ->
          lists:map(
             fun({Type, Key, _}) ->
                elasticlog_codec:decode(Type, lens:get(lens:at(Key), Json))

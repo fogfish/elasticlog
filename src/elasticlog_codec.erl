@@ -37,6 +37,12 @@ encode(?XSD_YEARMONTH, {_, _, _} = Val) ->
 encode(?XSD_YEAR, {_, _, _} = Val) ->
    scalar:s(tempus:encode(Val));
 
+encode(?GEORSS_POINT, {Lat, Lng}) ->
+   [Lng, Lat];
+
+encode(?GEORSS_JSON, #{<<"type">> := _, <<"coordinates">> := _} = GeoJson) ->
+   GeoJson;
+
 encode(_, Val) ->
    Val.
 
@@ -58,25 +64,31 @@ decode(Type, List)
  when is_list(List) ->
    [decode(Type, X) || X <- List];
 
-decode(?XSD_ANYURI, Iri) -> 
+decode(?XSD_ANYURI, Iri) ->
    decode_iri(Iri);
 
-decode(?XSD_DATETIME, Val) -> 
+decode(?XSD_DATETIME, Val) ->
    tempus:decode(Val);
 
-decode(?XSD_DATE, Val) -> 
+decode(?XSD_DATE, Val) ->
    tempus:decode(Val);
 
-decode(?XSD_TIME, Val) -> 
+decode(?XSD_TIME, Val) ->
    tempus:decode(Val);
 
-decode(?XSD_YEARMONTH, Val) -> 
+decode(?XSD_YEARMONTH, Val) ->
    tempus:decode(Val);
 
-decode(?XSD_YEAR, Val) -> 
+decode(?XSD_YEAR, Val) ->
    tempus:decode(Val);
 
-decode(_, Val) -> 
+decode(?GEORSS_POINT, [Lng, Lat]) ->
+   {Lat, Lng};
+
+decode(?GEORSS_JSON, #{<<"type">> := _, <<"coordinates">> := _} = GeoJson) ->
+   GeoJson;
+
+decode(_, Val) ->
    Val.
 
 

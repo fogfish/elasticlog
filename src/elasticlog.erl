@@ -83,7 +83,7 @@ schema_deploy_bucket(Sock, Schema) ->
          Error
    end.
 
-schema_deploy_fields(Sock, []) ->
+schema_deploy_fields(_, []) ->
    ok;
 schema_deploy_fields(Sock, [Head | Tail]) ->
    case esio:schema(Sock, Head) of
@@ -173,6 +173,10 @@ json_val({iri, Uri}) ->
    Uri;
 json_val({iri, Prefix, Suffix}) -> 
    <<Prefix/binary, $:, Suffix/binary>>;
+json_val({Lat, Lng}) ->
+   <<(scalar:s(Lat))/binary, $ , (scalar:s(Lng))/binary>>;
+json_val(#{<<"type">> := _, <<"coordinates">> := _} = GeoJson) ->
+   GeoJson;
 json_val({_, _, _} = T) -> 
    scalar:s(tempus:encode(T));
 json_val(Value) when is_atom(Value) -> 

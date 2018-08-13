@@ -67,6 +67,7 @@ typeof(?XSD_DAY)     -> #{type => text};
 
 typeof(?GEORSS_POINT) -> #{type => geo_point};
 typeof(?GEORSS_HASH)  -> #{type => geo_point};
+typeof(?GEORSS_JSON)  -> #{type => geo_shape};
 typeof({iri, ?LANG, _}) -> #{type => text}.
 
 
@@ -88,7 +89,8 @@ isa(<<"long">>) -> ?XSD_INTEGER;
 isa(<<"double">>) -> ?XSD_DECIMAL;
 isa(<<"boolean">>) -> ?XSD_BOOLEAN;
 isa(<<"date">>) -> ?XSD_DATETIME;
-isa(<<"geo_point">>) -> ?GEORSS_HASH;
+isa(<<"geo_shape">>) -> ?GEORSS_JSON;
+isa(<<"geo_point">>) -> ?GEORSS_POINT;
 isa(_) -> undefined.
 
 
