@@ -23,7 +23,17 @@
 -export([stream/2]).
 
 
-stream([Bucket|Keys], Head) ->
+stream([Bucket | Keys], Head) ->
+   stream(Bucket, elastic_keys(Keys), Head).
+
+elastic_keys([<<$?, Key/binary>> | Keys]) ->
+   [{option, Key} | elastic_keys(Keys)];
+elastic_keys([Key | Keys]) ->
+   [{required, Key} | elastic_keys(Keys)];
+elastic_keys([]) ->
+   [].
+
+stream(Bucket, Keys, Head) ->
    fun(Sock) ->
       [identity ||
          schema(Sock, Keys),
@@ -36,13 +46,13 @@ stream([Bucket|Keys], Head) ->
 
 schema(Sock, Keys) ->
    {ok, Schema} = elasticlog:schema(Sock),
-   [maps:get(Key, Schema) || Key <- Keys].
+   [maps:get(Key, Schema) || {_, Key} <- Keys].
 
 head(Schema, Stream) ->
    stream:map(
       fun(#{<<"_source">> := Json, <<"_score">> := _Score}) ->
          lists:map(
-            fun({Type, Key, _}) ->
+            fun({Type, {_, Key}, _}) ->
                elasticlog_codec:decode(Type, lens:get(lens:at(Key), Json))
             end,
             Schema
@@ -66,16 +76,20 @@ q(Pattern) ->
 
 %%
 %%
-match({_, ElasticKey, '_'}) ->
+match({_, {required, ElasticKey}, '_'}) ->
    [#{exists => #{field => ElasticKey}}];
-match({_, ElasticKey, undefined}) ->
-   [#{exists => #{field => ElasticKey}}];   
+match({_, {option, _}, '_'}) ->
+   [];
+match({_, {required, ElasticKey}, undefined}) ->
+   [#{exists => #{field => ElasticKey}}];
+match({_, {option, _}, undefined}) ->
+   [];
 match({?GEORSS_HASH, _, _}) ->
    %% Geo fields do not support exact searching, use dedicated geo queries instead
    [];
-match({?XSD_STRING, ElasticKey, Pattern}) -> 
+match({?XSD_STRING, {_, ElasticKey}, Pattern}) -> 
    elastic_query_string(ElasticKey, Pattern);
-match({Type, ElasticKey, Pattern}) ->
+match({Type, {_, ElasticKey}, Pattern}) ->
    elastic_match(Type, ElasticKey, Pattern);
 match(_) ->
    [].
@@ -84,9 +98,9 @@ match(_) ->
 %%
 filter({_, _, '_'}) ->
    [];
-filter({?GEORSS_HASH, ElasticKey, Pattern}) ->
+filter({?GEORSS_HASH, {_, ElasticKey}, Pattern}) ->
    elastic_geo_distance(ElasticKey, Pattern);
-filter({Type, ElasticKey, Pattern}) ->
+filter({Type, {_, ElasticKey}, Pattern}) ->
    elastic_filter(Type, ElasticKey, Pattern);
 filter(_) ->
    [].

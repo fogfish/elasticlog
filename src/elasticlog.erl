@@ -164,7 +164,10 @@ jsonify(_, ?stream() = Stream) ->
 jsonify(Schema, #stream{} = Stream) ->
    stream:map(
       fun(Fact) ->
-         maps:from_list(lists:zip(Schema, [json_val(X) || X <- Fact]))
+         maps:from_list([
+            {Key, json_val(Val)} || 
+               {Key, Val} <- lists:zip(Schema, Fact), Val /= ?None
+         ])
       end,
       Stream
    ).
