@@ -16,12 +16,15 @@
 %% @doc
 %%   datalog interface for elastic search
 -module(elasticlog).
-
 -compile({parse_transform, category}).
+
+-include("elasticlog.hrl").
 -include_lib("datum/include/datum.hrl").
 
 -export([start/0]).
 -export([
+   q/2,
+   q/3,
    schema/1,
    schema/2,
    schema/3,
@@ -47,6 +50,14 @@
 %%
 start() ->
    application:ensure_all_started(?MODULE).
+
+%%
+%% evaluate query
+q(Lp, Sock) ->
+   Lp(#elasticlog{sock = Sock}).
+
+q(Lp, Env, Sock) ->
+   Lp(#elasticlog{env = Env, sock = Sock}).
 
 %%
 %% read semantic schema

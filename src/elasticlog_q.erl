@@ -16,12 +16,16 @@
 %% @doc
 %%   datalog sigma function supports knowledge statement only.
 -module(elasticlog_q).
-
 -compile({parse_transform, category}).
+
+-include("elasticlog.hrl").
 -include_lib("semantic/include/semantic.hrl").
 
 -export([stream/2]).
 
+
+stream([<<"ENV">> | Key], _Head) ->
+   environment(Key);
 
 stream([Bucket | Keys], Head) ->
    stream(Bucket, elastic_keys(Keys), Head).
@@ -34,7 +38,7 @@ elastic_keys([]) ->
    [].
 
 stream(Bucket, Keys, Head) ->
-   fun(Sock) ->
+   fun(#elasticlog{sock = Sock}) ->
       [identity ||
          schema(Sock, Keys),
          Schema <- lists:zip3(_, Keys, Head),
@@ -165,3 +169,9 @@ elastic_geo_distance(ElasticKey, [GeoHash, Radius]) ->
 elastic_geo_distance(_, _) ->
    [].
 
+%%
+%%
+environment(Keys) ->
+   fun(#elasticlog{env = Env}) ->
+      [maps:get(Key, Env) || Key <- Keys]
+   end.
