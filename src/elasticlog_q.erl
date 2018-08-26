@@ -173,5 +173,5 @@ elastic_geo_distance(_, _) ->
 %%
 environment(Keys) ->
    fun(#elasticlog{env = Env}) ->
-      [maps:get(Key, Env) || Key <- Keys]
+      stream:new([maps:get(Key, Env) || Key <- Keys])
    end.
