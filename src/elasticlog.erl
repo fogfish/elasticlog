@@ -196,6 +196,8 @@ json_val(#{<<"type">> := _, <<"coordinates">> := _} = GeoJson) ->
    GeoJson;
 json_val(#{<<"key">> := _, <<"count">> := _} = Bucket) ->
    Bucket;
+json_val(#{} = Json) ->
+   Json;
 json_val({_, _, _} = T) -> 
    scalar:s(tempus:encode(T));
 json_val(Value) when is_atom(Value) -> 

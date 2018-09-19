@@ -39,6 +39,8 @@ fold({bucket, _, Spec}, SubQuery) when map_size(SubQuery) =:= 0 ->
    Spec;
 fold({bucket, Key, Spec}, SubQuery) ->
    lens:put(lens:c(lens:at(Key), lens:at(aggs)), SubQuery, Spec);
+fold({object, _, Spec}, SubQuery) ->
+   maps:merge(Spec, SubQuery);
 fold({metric, _, Spec}, SubQuery) ->
    maps:merge(Spec, SubQuery).
 
@@ -71,5 +73,7 @@ downfield({bucket, Key, _}, Aggs) ->
    lens:get(lens:c(lens:at(Key), lens:at(<<"buckets">>)), Aggs);
 
 downfield({metric, Key, _}, Aggs) ->
-   lens:get(lens:c(lens:at(Key), lens:at(<<"value">>)), Aggs).
+   lens:get(lens:c(lens:at(Key), lens:at(<<"value">>)), Aggs);
 
+downfield({object, Key, _}, Aggs) ->
+   lens:get(lens:at(Key), Aggs).

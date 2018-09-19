@@ -146,6 +146,90 @@ aggregate(#{'@' := category, '_' := [N, Key]}) ->
       }
    };
 
+aggregate(#{'@' := histogram, '_' := [Bin, Key]}) ->
+   {bucket, Key,
+      #{
+         Key => #{
+            histogram => #{
+               field    => Key,
+               interval => Bin
+            }
+         }
+      }
+   };
+
+aggregate(#{'@' := histogram, '_' := [Min, Max, Bin, Key]}) ->
+   {bucket, Key,
+      #{
+         Key => #{
+            histogram => #{
+               field    => Key,
+               interval => Bin,
+               extended_bounds => #{
+                  min => Min,
+                  max => Max
+               }
+            }
+         }
+      }
+   };
+
+aggregate(#{'@' := geohash, '_' := [Bin, Key]}) ->
+   {bucket, Key,
+      #{
+         Key => #{
+            geohash_grid => #{
+               field     => Key,
+               precision => Bin
+            }
+         }
+      }
+   };   
+
+aggregate(#{'@' := stats, '_' := [Key]}) ->
+   {object, Key,
+      #{
+         Key => #{
+            extended_stats => #{
+               field => Key
+            }
+         }
+      }
+   };
+
+aggregate(#{'@' := percentiles, '_' := [Key]}) ->
+   {object, Key,
+      #{
+         Key => #{
+            percentiles => #{
+               field => Key
+            }
+         }
+      }
+   };
+
+aggregate(#{'@' := geo_bounds, '_' := [Key]}) ->
+   {object, Key,
+      #{
+         Key => #{
+            geo_bounds => #{
+               field => Key
+            }
+         }
+      }
+   };
+
+aggregate(#{'@' := geo_centroid, '_' := [Key]}) ->
+   {object, Key,
+      #{
+         Key => #{
+            geo_centroid => #{
+               field => Key
+            }
+         }
+      }
+   };
+
 aggregate(#{'@' := sum, '_' := [Key]}) ->
    {metric, Key,
       #{
