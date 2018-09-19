@@ -33,6 +33,7 @@
    append_/2,
    append_/3,
    stream/2,
+   select/3,
    encode/1,
    decode/1,
    jsonify/2,
@@ -137,10 +138,12 @@ append_(Sock, Fact, Flag) ->
 
 
 %%
-%% datalog stream generator
+%% datalog generators
 stream(Keys, Head) ->
    elasticlog_q:stream(Keys, Head).
 
+select(Keys, Head, Query) ->
+   elasticlog_s:select(Keys, Head, Query). 
 
 %%
 %% encodes JSON-LD to storage format
@@ -191,6 +194,8 @@ json_val({Lat, Lng}) ->
    <<(scalar:s(Lat))/binary, $ , (scalar:s(Lng))/binary>>;
 json_val(#{<<"type">> := _, <<"coordinates">> := _} = GeoJson) ->
    GeoJson;
+json_val(#{<<"key">> := _, <<"count">> := _} = Bucket) ->
+   Bucket;
 json_val({_, _, _} = T) -> 
    scalar:s(tempus:encode(T));
 json_val(Value) when is_atom(Value) -> 

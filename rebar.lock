@@ -1,7 +1,7 @@
 {"1.1.0",
 [{<<"datalog">>,
   {git,"https://github.com/fogfish/datalog",
-       {ref,"983a5cd0d00b1a2d91f1754415bbc955a12dd616"}},
+       {ref,"a6fdb6be2e65f436404118ffc1220d792ec3d65a"}},
   0},
  {<<"datum">>,{pkg,<<"datum">>,<<"4.3.6">>},0},
  {<<"esio">>,
@@ -30,7 +30,7 @@
        {ref,"85343f9ba71c8d4f028e3cae3e2eea929addfbc1"}},
   1},
  {<<"meck">>,{pkg,<<"meck">>,<<"0.8.12">>},1},
- {<<"pipes">>,{pkg,<<"pipes">>,<<"2.0.0">>},2},
+ {<<"pipe">>,{pkg,<<"pipes">>,<<"2.0.0">>},2},
  {<<"semantic">>,
   {git,"https://github.com/fogfish/semantic",
        {ref,"6db551b5bbf9785bc6a168b5726ecc65638e8b06"}},
@@ -44,5 +44,5 @@
  {<<"datum">>, <<"07AA802EF8C68FC990164BB398890FBE03FF4FA30570C37BF6D836A4FDF27D54">>},
  {<<"jsx">>, <<"D2F6E5F069C00266CAD52FB15D87C428579EA4D7D73A33669E12679E203329DD">>},
  {<<"meck">>, <<"1F7B1A9F5D12C511848FEC26BBEFD09A21E1432EADB8982D9A8ACEB9891A3CF2">>},
- {<<"pipes">>, <<"A10DF54F1EC80EAA491EE7BD689C794886E6E668A9F05436514695E9CF5370AE">>}]}
+ {<<"pipe">>, <<"A10DF54F1EC80EAA491EE7BD689C794886E6E668A9F05436514695E9CF5370AE">>}]}
 ].
