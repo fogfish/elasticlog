@@ -239,5 +239,15 @@ aggregate(#{'@' := sum, '_' := [Key]}) ->
             }
          }
       }
-   }.
+   };
 
+aggregate(#{'@' := count, '_' := [Key]}) ->
+   {metric, Key,
+      #{
+         Key => #{
+            value_count => #{
+               field => Key
+            }
+         }
+      }
+   }.
