@@ -102,7 +102,7 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 %% [
 %%    [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
 %% ]
-stream:list(F(Sock)).
+stream:list(elasticlog:q(F, Sock)).
 ```
 
 **Data patterns**
@@ -128,7 +128,7 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 %%    [{iri,<<"http://example.org/movie/204">>}, <<"RoboCop">>],
 %%    [{iri,<<"http://example.org/movie/202">>}, <<"Predator">>]
 %% ]
-stream:list(F(Sock)).
+stream:list(elasticlog:q(F, Sock)).
 ```
 
 **Predicates**
@@ -156,7 +156,7 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 %%    [<<"Mad Max 2">>, 1981],
 %%    [<<"Alien">>, 1979]
 %% ]
-stream:list(F(Sock)).
+stream:list(elasticlog:q(F, Sock)).
 ```
 
 **Join relations**
@@ -198,7 +198,7 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 %%    [<<"Alien">>,<<"Sigourney Weaver">>],
 %%    [<<"Alien">>,<<"Veronica Cartwright">>]
 %% ]
-stream:list(F(Sock)).
+stream:list(elasticlog:q(F, Sock)).
 ```
 
 ```erlang
@@ -228,8 +228,77 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 %%    [<<"Rambo: First Blood Part II">>],
 %%    [<<"Rambo III">>]
 %% ]
-stream:list(F(Sock)).
+stream:list(elasticlog:q(F, Sock)).
 ```
+
+**Aggregations**
+
+Elastic has an [aggregation framework](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html) to aggregated data based on a search query. Aggregations is an essential tool for analytical purposes. The library uses similar concept of n-ary relations, there is a σ function (`.select`) that takes bucket, its keys and aggregations directives and produces a stream of tuples where each element is aggregated value:
+
+```
+x(_) :-
+   .select("bucket", "key", ...), %% defines a tuple's schema
+   category()                     %% defines an aggregation function for first element
+   count()                        %% defined an aggregation function for second element
+   ...
+   .
+```
+
+```
+%%
+%% define a query to count release per decade
+Q = "?- movie(_). 
+movie(year) :- 
+   .select(\"imdb\", \"schema:year\"), histogram(10).".
+
+%%
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
+
+%%
+%%
+%% apply the function to dataset and materialize a stream of tuple, it returns
+%% [
+%%    [#{<<"count">> =>  2, <<"key">> => 1970.0}],
+%%    [#{<<"count">> => 13, <<"key">> => 1980.0}],
+%%    [#{<<"count">> =>  4, <<"key">> => 1990.0}],
+%%    [#{<<"count">> =>  1, <<"key">> => 2.0e3}]]
+%% ]
+stream:list(elasticlog:q(F, Sock)).
+```
+
+```
+%%
+%% define a query to count releases by 5 top directors
+Q = "?- h(_, _). 
+movie(id) :- 
+   .select(\"imdb\", \"schema:director\"), category(5).
+
+person(id, name) :- 
+   .stream(\"imdb\", \"rdf:id\", \"schema:name\").
+
+h(name, id) :-
+   movie(id),
+   person(id, name).".
+
+%%
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
+
+%%
+%%
+%% apply the function to dataset and materialize a stream of tuple, it returns
+%% [
+%%    [<<"James Cameron">>, #{<<"count">> => 3, <<"key">> => <<"http://example.org/person/100">>}],
+%%    [<<"Richard Donner">>,#{<<"count">> => 3, <<"key">> => <<"http://example.org/person/111">>}],
+%%    [<<"George Miller">>, #{<<"count">> => 3, <<"key">> => <<"http://example.org/person/142">>}],
+%%    [<<"John McTiernan">>,#{<<"count">> => 2, <<"key">> => <<"http://example.org/person/108">>}],
+%%    [<<"Ted Kotcheff">>,  #{<<"count">> => 1, <<"key">> => <<"http://example.org/person/104">>}]
+%% ]
+stream:list(elasticlog:q(F, Sock)).
+```
+
+
 
 ### More Information
 

@@ -123,18 +123,7 @@ elastic_geo_distance(_, _) ->
 
 %%
 %%
-aggregate(#{'@' := category, '_' := [Key]}) ->
-   {bucket, Key,
-      #{
-         Key => #{
-            terms => #{
-               field => Key
-            }
-         }
-      }
-   };
-
-aggregate(#{'@' := category, '_' := [N, Key]}) ->
+aggregate({#{'@' := category, '_' := [N]}, {_, Key}}) ->
    {bucket, Key,
       #{
          Key => #{
@@ -146,7 +135,19 @@ aggregate(#{'@' := category, '_' := [N, Key]}) ->
       }
    };
 
-aggregate(#{'@' := histogram, '_' := [Bin, Key]}) ->
+aggregate({#{'@' := category}, {_, Key}}) ->
+   {bucket, Key,
+      #{
+         Key => #{
+            terms => #{
+               field => Key
+            }
+         }
+      }
+   };
+
+
+aggregate({#{'@' := histogram, '_' := [Bin]}, {_, Key}}) ->
    {bucket, Key,
       #{
          Key => #{
@@ -158,7 +159,7 @@ aggregate(#{'@' := histogram, '_' := [Bin, Key]}) ->
       }
    };
 
-aggregate(#{'@' := histogram, '_' := [Min, Max, Bin, Key]}) ->
+aggregate({#{'@' := histogram, '_' := [Min, Max, Bin]}, {_, Key}}) ->
    {bucket, Key,
       #{
          Key => #{
@@ -174,7 +175,7 @@ aggregate(#{'@' := histogram, '_' := [Min, Max, Bin, Key]}) ->
       }
    };
 
-aggregate(#{'@' := geohash, '_' := [Bin, Key]}) ->
+aggregate({#{'@' := geohash, '_' := [Bin]}, {_, Key}}) ->
    {bucket, Key,
       #{
          Key => #{
@@ -186,7 +187,7 @@ aggregate(#{'@' := geohash, '_' := [Bin, Key]}) ->
       }
    };   
 
-aggregate(#{'@' := stats, '_' := [Key]}) ->
+aggregate({#{'@' := stats}, {_, Key}}) ->
    {object, Key,
       #{
          Key => #{
@@ -197,7 +198,7 @@ aggregate(#{'@' := stats, '_' := [Key]}) ->
       }
    };
 
-aggregate(#{'@' := percentiles, '_' := [Key]}) ->
+aggregate({#{'@' := percentiles}, {_, Key}}) ->
    {object, Key,
       #{
          Key => #{
@@ -208,7 +209,7 @@ aggregate(#{'@' := percentiles, '_' := [Key]}) ->
       }
    };
 
-aggregate(#{'@' := geo_bounds, '_' := [Key]}) ->
+aggregate({#{'@' := geo_bounds}, {_, Key}}) ->
    {object, Key,
       #{
          Key => #{
@@ -219,7 +220,7 @@ aggregate(#{'@' := geo_bounds, '_' := [Key]}) ->
       }
    };
 
-aggregate(#{'@' := geo_centroid, '_' := [Key]}) ->
+aggregate({#{'@' := geo_centroid}, {_, Key}}) ->
    {object, Key,
       #{
          Key => #{
@@ -230,7 +231,7 @@ aggregate(#{'@' := geo_centroid, '_' := [Key]}) ->
       }
    };
 
-aggregate(#{'@' := sum, '_' := [Key]}) ->
+aggregate({#{'@' := sum}, {_, Key}}) ->
    {metric, Key,
       #{
          Key => #{
@@ -241,7 +242,7 @@ aggregate(#{'@' := sum, '_' := [Key]}) ->
       }
    };
 
-aggregate(#{'@' := count, '_' := [Key]}) ->
+aggregate({#{'@' := count}, {_, Key}}) ->
    {metric, Key,
       #{
          Key => #{

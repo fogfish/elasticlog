@@ -14,7 +14,7 @@ select(Bucket, Keys, Head, Query) ->
       [identity ||
          schema(Sock, Keys),
          Schema <- lists:zip3(_, Keys, Head),
-         Aggs <- lists:map(fun elasticlog_syntax:aggregate/1, Query),
+         Aggs <- lists:map(fun elasticlog_syntax:aggregate/1, lists:zip(Query, Keys)),
          q(Schema, Aggs),
          esio:lookup(Sock, Bucket, _, 10000),
          stream(_, Aggs)

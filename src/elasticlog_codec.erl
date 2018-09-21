@@ -51,6 +51,9 @@ encode_iri({iri, Prefix, Suffix}) ->
    <<Prefix/binary, $:, Suffix/binary>>;
 encode_iri({iri, Urn}) ->
    Urn;
+encode_iri(#{<<"key">> := IRI}) ->
+   %% Note: this is a special case for aggregated value
+   IRI;
 encode_iri(IRI)
  when is_binary(IRI) ->
    IRI.
