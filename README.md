@@ -244,7 +244,7 @@ x(_) :-
    .
 ```
 
-```
+```erlang
 %%
 %% define a query to count release per decade
 Q = "?- movie(_). 
@@ -267,7 +267,7 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 stream:list(elasticlog:q(F, Sock)).
 ```
 
-```
+```erlang
 %%
 %% define a query to count releases by 5 top directors
 Q = "?- h(_, _). 
