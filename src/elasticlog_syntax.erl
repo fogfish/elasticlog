@@ -5,7 +5,7 @@
 
 -export([
    keys/1
-,  pattern/1
+,  pattern/2
 ,  aggregate/1
 ]).
 
@@ -20,11 +20,10 @@ keys([]) ->
 
 %%
 %% Build a pattern match elastic search query
-pattern(Pattern) ->
-   Matches = lists:flatten(lists:map(fun(X) -> match(X) end, Pattern)),
+pattern(Pattern, Implicit) ->
+   Matches = lists:flatten(lists:map(fun(X) -> match(X) end, Pattern) ++ implicitly(Implicit)),
    Filters = lists:flatten(lists:map(fun(X) -> filter(X) end, Pattern)),
    #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
-
 
 
 %%
@@ -47,8 +46,14 @@ match({Type, {_, ElasticKey}, Pattern}) ->
 match(_) ->
    [].
 
+%%
+%%
+implicitly(undefined) ->
+   [];
+implicitly(Implicit) ->
+   [#{match => #{ElasticKey => Value}} || {ElasticKey, Value} <- maps:to_list(Implicit)].
 
-
+%%
 %%
 elastic_query_string(ElasticKey, Value)
  when not is_list(Value) ->

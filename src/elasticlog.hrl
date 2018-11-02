@@ -2,6 +2,6 @@
 %%
 %% 
 -record(elasticlog, {
-   env  = undefined :: #{},   %% global environment
-   sock = undefined :: pid()  %% elastic search socket
+   implicit = undefined :: #{},   %% implicit restrictions 
+   sock = undefined :: pid()      %% elastic search socket
 }).

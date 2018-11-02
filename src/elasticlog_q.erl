@@ -21,19 +21,15 @@
 
 -export([stream/2]).
 
-
-stream([<<"ENV">> | Key], _Head) ->
-   environment(Key);
-
 stream([Bucket | Keys], Head) ->
    stream(Bucket, elasticlog_syntax:keys(Keys), Head).
 
 stream(Bucket, Keys, Head) ->
-   fun(#elasticlog{sock = Sock}) ->
+   fun(#elasticlog{implicit = Implicit, sock = Sock}) ->
       [identity ||
          schema(Sock, Keys),
          Schema <- lists:zip3(_, Keys, Head),
-         elasticlog_syntax:pattern(Schema),
+         elasticlog_syntax:pattern(Schema, Implicit),
          esio:stream(Sock, Bucket, _),
          head(Schema, _)
       ]
@@ -55,17 +51,3 @@ head(Schema, Stream) ->
       end,
       Stream
    ).
-
-%%
-%%
-% debug(Json) ->
-%    error_logger:info_msg("[elasticlog] query: ~s~n", [jsx:encode(Json)]),
-%    Json.
-
-
-%%
-%%
-environment(Keys) ->
-   fun(#elasticlog{env = Env}) ->
-      stream:new([maps:get(Key, Env) || Key <- Keys])
-   end.

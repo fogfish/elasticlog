@@ -57,8 +57,8 @@ start() ->
 q(Lp, Sock) ->
    Lp(#elasticlog{sock = Sock}).
 
-q(Lp, Env, Sock) ->
-   Lp(#elasticlog{env = Env, sock = Sock}).
+q(Lp, Implicit, Sock) ->
+   Lp(#elasticlog{implicit = Implicit, sock = Sock}).
 
 %%
 %% read semantic schema
