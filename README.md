@@ -298,6 +298,25 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 stream:list(elasticlog:q(F, Sock)).
 ```
 
+**Implicit**
+
+The library support an implicit query constrains. It supports a use-case where confidential server-side needs to rewrite queries originated by public client (e.g. inject scopes or security constrains). The example below shows usage of implicit. The constrains `dc:publisher is imdb` is implicitly injected to each query supplied by the client.
+
+```erlang
+%%
+%% define a query goal to match a person with `name` equal to `Ridley Scott`.
+Q = "?- person(_, \"Ridley Scott\").
+person(id, name) :- 
+   .stream(\"imdb\", \"rdf:id\", \"schema:name\").".
+
+%%
+%% parse and compile a query into executable function
+F = datalog:c(elasticlog, datalog:p(Q)).
+
+%%
+%% apply the function to dataset with implicit query.
+stream:list(elasticlog:q(F, #{<<"dc:publisher">> => <<"imdb">>}, Sock)).
+```
 
 
 ### More Information

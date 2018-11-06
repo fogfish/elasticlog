@@ -1,12 +1,9 @@
 {"1.1.0",
-[{<<"datalog">>,
-  {git,"https://github.com/fogfish/datalog",
-       {ref,"0ed051f61fff87f524909f5470aac60c558513c6"}},
-  0},
- {<<"datum">>,{pkg,<<"datum">>,<<"4.3.6">>},0},
+[{<<"datalog">>,{pkg,<<"datalog">>,<<"1.2.1">>},0},
+ {<<"datum">>,{pkg,<<"datum">>,<<"4.5.0">>},0},
  {<<"esio">>,
   {git,"https://github.com/fogfish/esio",
-       {ref,"a5adb22b42f55d5b0b874b4d5732358eda9f5d41"}},
+       {ref,"c05833730f6106d6163a7968fa47404b4884c395"}},
   0},
  {<<"feta">>,
   {git,"https://github.com/fogfish/feta",
@@ -41,7 +38,8 @@
   1}]}.
 [
 {pkg_hash,[
- {<<"datum">>, <<"07AA802EF8C68FC990164BB398890FBE03FF4FA30570C37BF6D836A4FDF27D54">>},
+ {<<"datalog">>, <<"FC8DB56976708E9009EE0BFD3AA42F874FE203B6625811F6F6F960EBE03867C5">>},
+ {<<"datum">>, <<"0F7F064A509632C70448F9BC7E7295BD5F9CD6E3207863B176416EF14FD19E0C">>},
  {<<"jsx">>, <<"D2F6E5F069C00266CAD52FB15D87C428579EA4D7D73A33669E12679E203329DD">>},
  {<<"meck">>, <<"1F7B1A9F5D12C511848FEC26BBEFD09A21E1432EADB8982D9A8ACEB9891A3CF2">>},
  {<<"pipe">>, <<"A10DF54F1EC80EAA491EE7BD689C794886E6E668A9F05436514695E9CF5370AE">>}]}
