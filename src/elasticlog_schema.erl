@@ -77,11 +77,17 @@ predicate(Json) ->
    maps:from_list(lists:flatten([schema_to_rdf(X) || X <- maps:to_list(Json)])).
 
 schema_to_rdf({_, Schema}) ->
-   Properties  = lens:get(lens_properties(), Schema),
-   [{P, isa(lens:get(lens:at(<<"type">>), Type))} || {P, Type} <- maps:to_list(Properties)].
+   properties([], lens:get(lens_properties(), Schema)).
+
+properties(Prefix, #{<<"properties">> := Properties}) ->
+   [properties(Prefix ++ [P], Type) || {P, Type} <- maps:to_list(Properties)];
+properties(Prefix, #{<<"type">> := Type}) ->
+   [ {typecast:s(lists:join(<<".">>, Prefix)), isa(Type)} ];
+properties(_, #{}) ->
+   [].
 
 lens_properties() ->
-   lens:c(lens:at(<<"mappings">>, #{}), lens:at(<<"_doc">>, #{}), lens:at(<<"properties">>, #{})).
+   lens:c(lens:at(<<"mappings">>, #{}), lens:at(<<"_doc">>, #{})).
 
 isa(<<"keyword">>) -> ?XSD_ANYURI;
 isa(<<"text">>) -> ?XSD_STRING;

@@ -55,6 +55,10 @@ implicitly(Implicit) ->
 
 %%
 %%
+elastic_query_string(ElasticKey, {iri, _} = Pattern) ->
+   %% sometimes elastic schema is mis-configured
+   elastic_match(?XSD_ANYURI, ElasticKey, Pattern);
+
 elastic_query_string(ElasticKey, Value)
  when not is_list(Value) ->
    %% range filter is encoded as list at datalog: [{'>', ...}, ...]
@@ -128,6 +132,9 @@ elastic_geo_distance(_, _) ->
 
 %%
 %%
+aggregate({#{'@' := identity}, {_, Key}}) ->
+   {identity, Key, undefined};
+
 aggregate({#{'@' := category, '_' := [N]}, {_, Key}}) ->
    {bucket, Key,
       #{

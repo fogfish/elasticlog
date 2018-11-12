@@ -42,7 +42,9 @@ fold({bucket, Key, Spec}, SubQuery) ->
 fold({object, _, Spec}, SubQuery) ->
    maps:merge(Spec, SubQuery);
 fold({metric, _, Spec}, SubQuery) ->
-   maps:merge(Spec, SubQuery).
+   maps:merge(Spec, SubQuery);
+fold({identity, _, _}, SubQuery) ->
+   SubQuery.
 
 %%
 %%
@@ -76,4 +78,8 @@ downfield({metric, Key, _}, Aggs) ->
    lens:get(lens:c(lens:at(Key), lens:at(<<"value">>)), Aggs);
 
 downfield({object, Key, _}, Aggs) ->
-   lens:get(lens:at(Key), Aggs).
+   lens:get(lens:at(Key), Aggs);
+
+downfield(identity, _) ->
+   %% identity aggregation takes value from previous predicate.
+   undefined.
