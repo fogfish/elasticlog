@@ -80,6 +80,6 @@ downfield({metric, Key, _}, Aggs) ->
 downfield({object, Key, _}, Aggs) ->
    lens:get(lens:at(Key), Aggs);
 
-downfield(identity, _) ->
+downfield({identity, _, _}, _) ->
    %% identity aggregation takes value from previous predicate.
    undefined.
