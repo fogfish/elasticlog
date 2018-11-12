@@ -10,12 +10,12 @@ select([Bucket | Keys], Head, Query) ->
    select(Bucket, elasticlog_syntax:keys(Keys), Head, Query).
 
 select(Bucket, Keys, Head, Query) ->
-   fun(#elasticlog{sock = Sock}) ->
+   fun(#elasticlog{implicit = Implicit, sock = Sock}) ->
       [identity ||
          schema(Sock, Keys),
          Schema <- lists:zip3(_, Keys, Head),
          Aggs <- lists:map(fun elasticlog_syntax:aggregate/1, lists:zip(Query, Keys)),
-         q(Schema, Aggs),
+         q(Schema, Implicit, Aggs),
          esio:lookup(Sock, Bucket, _, 10000),
          stream(_, Aggs)
       ]
@@ -27,8 +27,8 @@ schema(Sock, Keys) ->
 
 %%
 %%
-q(Pattern, Aggs) ->
-   BaseQuery = elasticlog_syntax:pattern(Pattern),
+q(Pattern, Implicit, Aggs) ->
+   BaseQuery = elasticlog_syntax:pattern(Pattern, Implicit),
    SubQuery = lists:foldr(fun fold/2, #{}, Aggs),
    BaseQuery#{
       aggs => SubQuery,
