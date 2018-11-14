@@ -175,7 +175,7 @@ decode(#{<<"@id">> := _} = Json) ->
 %% encodes deducted fact(s) to json format
 jsonify(_, ?stream() = Stream) ->
    Stream;
-jsonify(Schema, #stream{} = Stream) ->
+jsonify([_ | Schema], #stream{} = Stream) ->
    stream:map(
       fun(Fact) ->
          maps:from_list([
