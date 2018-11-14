@@ -1,13 +1,14 @@
 {application, elasticlog,
    [
       {description, "elastic search datalog"},
-      {vsn,         "0.7.3"},
+      {vsn,         "0.7.4"},
       {modules,     []},
       {registered,  []},
       {applications,[
          kernel
         ,stdlib
         ,semantic
+        ,datalog
         ,esio
       ]},
       {env, []}
