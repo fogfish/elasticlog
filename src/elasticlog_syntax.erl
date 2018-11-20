@@ -36,8 +36,13 @@ match({_, {required, ElasticKey}, undefined}) ->
    [#{exists => #{field => ElasticKey}}];
 match({_, {option, _}, undefined}) ->
    [];
+%%
+%% Geo fields do not support exact searching, we are using geo filters
 match({?GEORSS_HASH, _, _}) ->
-   %% Geo fields do not support exact searching, use dedicated geo queries instead
+   [];
+match({?GEORSS_POINT, _, _}) ->
+   [];
+match({?GEORSS_JSON, _, _}) ->
    [];
 match({?XSD_STRING, {_, ElasticKey}, Pattern}) -> 
    elastic_query_string(ElasticKey, Pattern);
@@ -94,6 +99,10 @@ filter({_, _, '_'}) ->
    [];
 filter({?GEORSS_HASH, {_, ElasticKey}, Pattern}) ->
    elastic_geo_distance(ElasticKey, Pattern);
+filter({?GEORSS_POINT, {_, ElasticKey}, Pattern}) ->
+   elastic_geo_distance(ElasticKey, Pattern);
+filter({?GEORSS_JSON, {_, ElasticKey}, Pattern}) ->
+   elastic_geo_shape(ElasticKey, Pattern);
 filter({Type, {_, ElasticKey}, Pattern}) ->
    elastic_filter(Type, ElasticKey, Pattern);
 filter(_) ->
@@ -123,12 +132,39 @@ elastic_compare('=<') -> lte.
 
 %%
 elastic_geo_distance(ElasticKey, [GeoHash, Radius]) ->
-   %% geo range filter is encoded as list at datalog: [hash, radius]
    #{geo_distance => #{distance => Radius, ElasticKey => GeoHash}};
-
+elastic_geo_distance(ElasticKey, [Lng, Lat, Radius]) ->
+   #{geo_distance => #{distance => Radius, ElasticKey => [Lng, Lat]}};
 elastic_geo_distance(_, _) ->
    [].
 
+%%
+elastic_geo_shape(ElasticKey, [Index, Id, Field]) ->
+   #{geo_shape => #{
+      ElasticKey => #{
+         indexed_shape => #{
+            index => Index 
+         ,  type => <<"_doc">>
+         ,  id => Id
+         ,  path => Field
+         } 
+      }
+   }};
+
+elastic_geo_shape(ElasticKey, Polygon) ->
+   #{geo_shape => #{
+      ElasticKey => #{
+         shape => #{
+            type => <<"Polygon">>
+         ,  coordinates => [polygon(Polygon)]
+         }
+      }
+   }}.
+
+polygon([Lng, Lat | Tail]) ->
+   [[Lng, Lat] | polygon(Tail)];
+polygon([]) ->
+   [].
 
 %%
 %%
