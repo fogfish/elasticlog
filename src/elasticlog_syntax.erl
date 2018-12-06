@@ -57,9 +57,10 @@ match({Type, {_, ElasticKey}, Pattern}) ->
 match(_) ->
    [].
 
-
-negate({Type, {_, ElasticKey}, Pattern}) ->
-   elastic_not_match(Type, ElasticKey, Pattern);
+%%
+%%
+negate({Type, {_, ElasticKey}, [{'=/=', Value}]}) ->
+   elastic_not_match(Type, ElasticKey, Value);
 negate(_) ->
    [].
 
@@ -105,7 +106,7 @@ elastic_match(_, _, _) ->
    [].
 
 %%
-elastic_not_match(Type, ElasticKey, [{'=/=', Value}]) ->
+elastic_not_match(Type, ElasticKey, Value) ->
    [#{term => #{ElasticKey => elasticlog_codec:encode(Type, Value)}}].
 
 
