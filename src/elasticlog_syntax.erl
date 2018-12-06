@@ -22,8 +22,14 @@ keys([]) ->
 %% Build a pattern match elastic search query
 pattern(Pattern, Implicit) ->
    Matches = lists:flatten(lists:map(fun(X) -> match(X) end, Pattern) ++ implicitly(Implicit)),
+   Negates = lists:flatten(lists:map(fun(X) -> negate(X) end, Pattern)),
    Filters = lists:flatten(lists:map(fun(X) -> filter(X) end, Pattern)),
-   #{'query' => #{bool => #{must => Matches, filter => Filters}}}.
+   case Negates of
+      [] ->
+         #{'query' => #{bool => #{must => Matches, filter => Filters}}};
+      _  ->
+         #{'query' => #{bool => #{must => Matches, must_not => Negates, filter => Filters}}}
+   end.
 
 
 %%
@@ -50,6 +56,13 @@ match({Type, {_, ElasticKey}, Pattern}) ->
    elastic_match(Type, ElasticKey, Pattern);
 match(_) ->
    [].
+
+
+negate({Type, {_, ElasticKey}, Pattern}) ->
+   elastic_not_match(Type, ElasticKey, Pattern);
+negate(_) ->
+   [].
+
 
 %%
 %%
@@ -91,6 +104,9 @@ elastic_match(Type, ElasticKey, [H | _] = Value)
 elastic_match(_, _, _) ->
    [].
 
+%%
+elastic_not_match(Type, ElasticKey, [{'=/=', Value}]) ->
+   [#{term => #{ElasticKey => elasticlog_codec:encode(Type, Value)}}].
 
 
 %%
