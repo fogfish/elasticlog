@@ -132,7 +132,7 @@ elastic_filter(Type, ElasticKey, [H | _] = Value)
  when is_tuple(H) ->
    %% range filter is encoded as list at datalog: [{'>', ...}, ...]
    #{range => 
-      #{ElasticKey => maps:from_list([{elastic_compare(Op), elasticlog_codec:encode(Type, X)} || {Op, X} <- Value])}
+      #{ElasticKey => maps:from_list([{elastic_compare(Op), elasticlog_codec:encode(Type, X)} || {Op, X} <- Value, Op /= '=/='])}
    };
 
 elastic_filter(_, _, _) ->
