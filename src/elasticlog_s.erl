@@ -16,6 +16,7 @@ select(Bucket, Keys, Head, Query) ->
          Schema <- lists:zip3(_, Keys, Head),
          Aggs <- lists:map(fun elasticlog_syntax:aggregate/1, lists:zip(Query, Keys)),
          q(Schema, Implicit, Aggs),
+         log_elastic_query(_),
          esio:lookup(Sock, Bucket, _, 10000),
          stream(_, Aggs)
       ]
@@ -83,3 +84,7 @@ downfield({object, Key, _}, Aggs) ->
 downfield({identity, _, _}, _) ->
    %% identity aggregation takes value from previous predicate.
    undefined.
+
+log_elastic_query(Query) ->
+   error_logger:info_msg("~s~n", [jsx:encode(Query)]),
+   Query.

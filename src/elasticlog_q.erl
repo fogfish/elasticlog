@@ -30,6 +30,7 @@ stream(Bucket, Keys, Head) ->
          schema(Sock, Keys),
          Schema <- lists:zip3(_, Keys, Head),
          elasticlog_syntax:pattern(Schema, Implicit),
+         log_elastic_query(_),
          esio:stream(Sock, Bucket, _),
          head(Schema, _)
       ]
@@ -51,3 +52,7 @@ head(Schema, Stream) ->
       end,
       Stream
    ).
+
+log_elastic_query(Query) ->
+   error_logger:info_msg("~s~n", [jsx:encode(Query)]),
+   Query.
