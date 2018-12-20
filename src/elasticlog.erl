@@ -206,6 +206,10 @@ json_val(Value) when is_float(Value) ->
    Value;
 json_val(Value) when is_integer(Value) -> 
    Value;
+json_val(Value) when is_binary(Value) -> 
+   Value;
+json_val(Value) when is_list(Value) ->
+   [json_val(X) || X <- Value];
 json_val(Value) ->
    scalar:s(Value).
 

@@ -80,7 +80,10 @@ schema_to_rdf({_, Schema}) ->
    properties([], lens:get(lens_properties(), Schema)).
 
 properties(Prefix, #{<<"properties">> := Properties}) ->
-   [properties(Prefix ++ [P], Type) || {P, Type} <- maps:to_list(Properties)];
+   [
+      [{typecast:s(lists:join(<<".">>, Prefix)), undefined}]
+   ,  [properties(Prefix ++ [P], Type) || {P, Type} <- maps:to_list(Properties)]
+   ];
 properties(Prefix, #{<<"type">> := Type}) ->
    [ {typecast:s(lists:join(<<".">>, Prefix)), isa(Type)} ];
 properties(_, #{}) ->
