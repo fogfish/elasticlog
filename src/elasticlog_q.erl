@@ -45,7 +45,9 @@ head(Schema, Stream) ->
       fun(#{<<"_source">> := Json, <<"_score">> := _Score}) ->
          lists:map(
             fun({Type, {_, Key}, _}) ->
-               elasticlog_codec:decode(Type, lens:get(lens:at(Key), Json))
+               Path = binary:split(Key, <<$.>>, [global]),
+               Lens = lens:c([lens:at(X) || X <- Path]),
+               elasticlog_codec:decode(Type, lens:get(Lens, Json))
             end,
             Schema
          )
