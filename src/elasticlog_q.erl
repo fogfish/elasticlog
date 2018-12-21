@@ -56,7 +56,7 @@ head(Schema, Stream) ->
       Stream
    ).
 
-enable_sorting(<<$^, Key/binary>>, Query) ->
+enable_sorting({sortby, Key}, Query) ->
    Query#{sort => Key};
 enable_sorting(_, Query) ->
    Query.

@@ -14,7 +14,7 @@
 keys([<<$?, Key/binary>> | Keys]) ->
    [{option, Key} | keys(Keys)];
 keys([<<$^, Key/binary>> | Keys]) ->
-   [{required, Key} | keys(Keys)];
+   [{sortby, Key} | keys(Keys)];
 keys([Key | Keys]) ->
    [{required, Key} | keys(Keys)];
 keys([]) ->
@@ -38,9 +38,13 @@ pattern(Pattern, Implicit) ->
 %%
 match({_, {required, ElasticKey}, '_'}) ->
    [#{exists => #{field => ElasticKey}}];
+match({_, {sortby, ElasticKey}, '_'}) ->
+   [#{exists => #{field => ElasticKey}}];
 match({_, {option, _}, '_'}) ->
    [];
 match({_, {required, ElasticKey}, undefined}) ->
+   [#{exists => #{field => ElasticKey}}];
+match({_, {sortby, ElasticKey}, undefined}) ->
    [#{exists => #{field => ElasticKey}}];
 match({_, {option, _}, undefined}) ->
    [];
