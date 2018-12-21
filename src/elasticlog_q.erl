@@ -30,6 +30,7 @@ stream(Bucket, Keys, Head) ->
          schema(Sock, Keys),
          Schema <- lists:zip3(_, Keys, Head),
          elasticlog_syntax:pattern(Schema, Implicit),
+         enable_sorting(hd(Keys), _),
          log_elastic_query(_),
          esio:stream(Sock, Bucket, _),
          head(Schema, _)
@@ -55,6 +56,12 @@ head(Schema, Stream) ->
       Stream
    ).
 
+enable_sorting(<<$^, Key/binary>>, Query) ->
+   Query#{sort => Key};
+enable_sorting(_, Query) ->
+   Query.
+
 log_elastic_query(Query) ->
    error_logger:info_msg("~s~n", [jsx:encode(Query)]),
    Query.
+

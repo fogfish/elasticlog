@@ -13,6 +13,8 @@
 %% we support an optional keys as part of logical statement
 keys([<<$?, Key/binary>> | Keys]) ->
    [{option, Key} | keys(Keys)];
+keys([<<$^, Key/binary>> | Keys]) ->
+   [{required, Key} | keys(Keys)];
 keys([Key | Keys]) ->
    [{required, Key} | keys(Keys)];
 keys([]) ->

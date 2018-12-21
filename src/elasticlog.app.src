@@ -1,7 +1,7 @@
 {application, elasticlog,
    [
       {description, "elastic search datalog"},
-      {vsn,         "0.7.10"},
+      {vsn,         "0.7.11"},
       {modules,     []},
       {registered,  []},
       {applications,[
