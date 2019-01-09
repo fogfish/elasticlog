@@ -48,7 +48,7 @@ head(Schema, Stream) ->
             fun({Type, {_, Key}, _}) ->
                Path = binary:split(Key, <<$.>>, [global]),
                Lens = lens:c([lens:at(X) || X <- Path]),
-               elasticlog_codec:decode(Type, lens:get(Lens, Json))
+               [option || lens:get(Lens, Json), elasticlog_codec:decode(Type, _)]
             end,
             Schema
          )
