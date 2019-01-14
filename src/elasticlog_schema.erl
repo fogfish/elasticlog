@@ -56,10 +56,10 @@ typeof(?XSD_DOUBLE)  -> #{type => double};
 typeof(?XSD_BOOLEAN) -> #{type => boolean};
 
 typeof(?XSD_DATETIME)-> #{type => date, format => basic_date_time_no_millis};
-typeof(?XSD_DATE)    -> #{type => date, format => basic_date_time_no_millis};
+typeof(?XSD_DATE)    -> #{type => date, format => <<"yyyy-MM-dd||yyyyMMdd">>};
 typeof(?XSD_TIME)    -> #{type => date, format => basic_date_time_no_millis};
 typeof(?XSD_YEARMONTH) -> #{type => date, format => basic_date_time_no_millis};
-typeof(?XSD_YEAR)    -> #{type => date, format => basic_date_time_no_millis};
+typeof(?XSD_YEAR)    -> #{type => date, format => <<"yyyy">>};
 
 typeof(?XSD_MONTHDAY)-> #{type => text};
 typeof(?XSD_MONTH)   -> #{type => text};

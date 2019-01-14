@@ -139,7 +139,7 @@ append_(Sock, Fact, Flag) ->
 
 %%
 %% datalog generators
-stream({iri, <<"elastic">>, Bucket}, Keys, Head) ->
+stream({iri, Bucket, _}, Keys, Head) ->
    elasticlog_q:stream(Bucket, Keys, Head).
 
 select(Keys, Head, Query) ->

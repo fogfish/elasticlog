@@ -52,8 +52,8 @@ elasticlog:start().
 %% deploy a schema
 elasticlog:schema(Sock, #{
    <<"schema:name">> => <<"xsd:string">>,
-   <<"schema:born">> => <<"xsd:string">>,
-   <<"schema:death">> => <<"xsd:string">>,
+   <<"schema:born">> => <<"xsd:date">>,
+   <<"schema:death">> => <<"xsd:date">>,
    <<"schema:title">> => <<"xsd:string">>,
    <<"schema:year">> => <<"xsd:integer">>,
    <<"schema:director">> => <<"xsd:anyURI">>,
@@ -89,9 +89,11 @@ bucket. It takes a name of bucket as first argument followed by predicate names.
 ```erlang
 %%
 %% define a query goal to match a person with `name` equal to `Ridley Scott`.
-Q = "?- elastic:imdb(_, \"Ridley Scott\").
+Q = "
+   ?- imdb:person(_, \"Ridley Scott\").
 
-elastic:imdb(\"rdf:id\", \"schema:name\").".
+   imdb:person(\"rdf:id\", \"schema:name\").
+".
 
 %%
 %% parse and compile a query into executable function
@@ -110,12 +112,14 @@ stream:list(elasticlog:q(F, Sock)).
 ```erlang
 %%
 %% define a query to discover all movies produces in 1987
-Q = "?- h(_, _). 
-movie(id, title, year) :- 
-   .stream(\"imdb\", \"rdf:id\", \"schema:title\", \"schema:year\").
+Q = "
+   ?- movie(_, _). 
 
-h(id, title) :- 
-   movie(id, title, 1987).".
+   imdb:movie(\"rdf:id\", \"schema:title\", \"schema:year\").
+
+   movie(id, title) :- 
+      imdb:movie(id, title, 1987).
+".
 
 %%
 %% parse and compile a query into executable function
@@ -136,12 +140,14 @@ stream:list(elasticlog:q(F, Sock)).
 ```erlang
 %%
 %% define a query to discover all movies produces  before 1984
-Q = "?- h(_, _). 
-movie(title, year) :- 
-   .stream(\"imdb\", \"schema:title\", \"schema:year\").
+Q = "
+   ?- movie(_, _).
 
-h(title, year) :- 
-   movie(title, year), year < 1984.".
+   imdb:movie(\"rdf:id\", \"schema:title\", \"schema:year\").
+
+   movie(title, year) :- 
+      imdb:movie(id, title, year), year < 1984.
+".
 
 %%
 %% parse and compile a query into executable function
@@ -164,18 +170,18 @@ stream:list(elasticlog:q(F, Sock)).
 ```erlang
 %%
 %% define a query to discover actors of all movies produced before 1984
-Q = "?- h(_, _). 
-movie(title, year) :- 
-   .stream(\"imdb\", \"schema:title\", \"schema:year\", \"schema:cast\").
+Q = "
+   ?- actors(_, _).
 
-person(id, name) :- 
-   .stream(\"imdb\", \"rdf:id\", \"schema:name\").
+   imdb:movie(\"schema:title\", \"schema:year\", \"schema:cast\").
+   imdb:person(\"rdf:id\", \"schema:name\").
 
-h(title, name) :- 
-   movie(title, year, cast), 
-   .flat(cast), 
-   person(cast, name), 
-   year < 1984.".
+   actors(title, name) :- 
+      imdb:movie(title, year, cast), 
+      .flat(cast), 
+      imdb:person(cast, name), 
+      year < 1984.
+".
 
 %%
 %% parse and compile a query into executable function
@@ -204,17 +210,17 @@ stream:list(elasticlog:q(F, Sock)).
 ```erlang
 %%
 %% define a query to discover all movies with Sylvester Stallone
-Q = "?- h(_). 
-movie(title, cast) :- 
-   .stream(\"imdb\", \"schema:title\", \"schema:cast\").
+Q = "
+   ?- movie(_).
 
-person(id, name) :- 
-   .stream(\"imdb\", \"rdf:id\", \"schema:name\").
+   imdb:movie(\"schema:title\", \"schema:cast\").
+   imdb:person(\"rdf:id\", \"schema:name\").
 
-h(title) :- 
-   person(id, name), 
-   movie(title, id), 
-   name = \"Sylvester Stallone\".".
+   movie(title) :- 
+      imdb:person(id, name), 
+      imdb:movie(title, id), 
+      name = \"Sylvester Stallone\".
+".
 
 %%
 %% parse and compile a query into executable function
