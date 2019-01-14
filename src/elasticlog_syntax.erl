@@ -11,14 +11,23 @@
 
 %%
 %% we support an optional keys as part of logical statement
-keys([<<$?, Key/binary>> | Keys]) ->
-   [{option, Key} | keys(Keys)];
-keys([<<$^, Key/binary>> | Keys]) ->
-   [{sortby, Key} | keys(Keys)];
-keys([Key | Keys]) ->
+keys([{option, _} = Key | Keys]) ->
+   [Key | keys(Keys)];
+keys([{sortby, _} = Key | Keys]) ->
+   [Key | keys(Keys)];
+keys([Key | Keys]) when is_binary(Key) ->
    [{required, Key} | keys(Keys)];
 keys([]) ->
    [].
+
+% keys([<<$?, Key/binary>> | Keys]) ->
+%    [{option, Key} | keys(Keys)];
+% keys([<<$^, Key/binary>> | Keys]) ->
+%    [{sortby, Key} | keys(Keys)];
+% keys([Key | Keys]) ->
+%    [{required, Key} | keys(Keys)];
+% keys([]) ->
+%    [].
 
 %%
 %% Build a pattern match elastic search query

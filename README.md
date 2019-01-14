@@ -89,9 +89,9 @@ bucket. It takes a name of bucket as first argument followed by predicate names.
 ```erlang
 %%
 %% define a query goal to match a person with `name` equal to `Ridley Scott`.
-Q = "?- person(_, \"Ridley Scott\").
-person(id, name) :- 
-   .stream(\"imdb\", \"rdf:id\", \"schema:name\").".
+Q = "?- elastic:imdb(_, \"Ridley Scott\").
+
+elastic:imdb(\"rdf:id\", \"schema:name\").".
 
 %%
 %% parse and compile a query into executable function

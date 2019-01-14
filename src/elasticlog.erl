@@ -32,7 +32,7 @@
    append/3,
    append_/2,
    append_/3,
-   stream/2,
+   stream/3,
    select/3,
    encode/1,
    decode/1,
@@ -139,8 +139,8 @@ append_(Sock, Fact, Flag) ->
 
 %%
 %% datalog generators
-stream(Keys, Head) ->
-   elasticlog_q:stream(Keys, Head).
+stream({iri, <<"elastic">>, Bucket}, Keys, Head) ->
+   elasticlog_q:stream(Bucket, Keys, Head).
 
 select(Keys, Head, Query) ->
    elasticlog_s:select(Keys, Head, Query). 

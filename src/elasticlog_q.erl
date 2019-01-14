@@ -19,18 +19,19 @@
 -compile({parse_transform, category}).
 -include("elasticlog.hrl").
 
--export([stream/2]).
+-export([stream/3]).
 
-stream([Bucket | Keys], Head) ->
-   stream(Bucket, elasticlog_syntax:keys(Keys), Head).
+% stream([Bucket | Keys], Head) ->
+%    stream(Bucket, elasticlog_syntax:keys(Keys), Head).
 
 stream(Bucket, Keys, Head) ->
    fun(#elasticlog{implicit = Implicit, sock = Sock}) ->
       [identity ||
-         schema(Sock, Keys),
-         Schema <- lists:zip3(_, Keys, Head),
+         K <- elasticlog_syntax:keys(Keys),
+         schema(Sock, K),
+         Schema <- lists:zip3(_, K, Head),
          elasticlog_syntax:pattern(Schema, Implicit),
-         enable_sorting(hd(Keys), _),
+         enable_sorting(hd(K), _),
          log_elastic_query(_),
          esio:stream(Sock, Bucket, _),
          head(Schema, _)
