@@ -55,15 +55,15 @@ typeof(?XSD_DOUBLE)  -> #{type => double};
 
 typeof(?XSD_BOOLEAN) -> #{type => boolean};
 
-typeof(?XSD_DATETIME)-> #{type => date, format => basic_date_time_no_millis};
+typeof(?XSD_DATETIME)-> #{type => date, format => <<"yyyy-MM-dd'T'HH:mm:ssZ||yyyyMMdd'T'HHmmssZ">>};
 typeof(?XSD_DATE)    -> #{type => date, format => <<"yyyy-MM-dd||yyyyMMdd">>};
-typeof(?XSD_TIME)    -> #{type => date, format => basic_date_time_no_millis};
-typeof(?XSD_YEARMONTH) -> #{type => date, format => basic_date_time_no_millis};
+typeof(?XSD_TIME)    -> #{type => date, format => <<"HH:mm:ssZ||HHmmssZ">>};
+typeof(?XSD_YEARMONTH) -> #{type => date, format => <<"yyyy-MM">>};
 typeof(?XSD_YEAR)    -> #{type => date, format => <<"yyyy">>};
 
-typeof(?XSD_MONTHDAY)-> #{type => text};
-typeof(?XSD_MONTH)   -> #{type => text};
-typeof(?XSD_DAY)     -> #{type => text};
+typeof(?XSD_MONTHDAY)-> #{type => date, format => <<"--MM-dd">>};
+typeof(?XSD_MONTH)   -> #{type => date, format => <<"MM">>};
+typeof(?XSD_DAY)     -> #{type => date, format => <<"dd">>};
 
 typeof(?GEORSS_POINT) -> #{type => geo_point};
 typeof(?GEORSS_HASH)  -> #{type => geo_point};
@@ -84,7 +84,7 @@ properties(Prefix, #{<<"properties">> := Properties}) ->
       [{typecast:s(lists:join(<<".">>, Prefix)), undefined}]
    ,  [properties(Prefix ++ [P], Type) || {P, Type} <- maps:to_list(Properties)]
    ];
-properties(Prefix, #{<<"type">> := Type}) ->
+properties(Prefix, Type) ->
    [ {typecast:s(lists:join(<<".">>, Prefix)), isa(Type)} ];
 properties(_, #{}) ->
    [].
@@ -92,14 +92,21 @@ properties(_, #{}) ->
 lens_properties() ->
    lens:c(lens:at(<<"mappings">>, #{}), lens:at(<<"_doc">>, #{})).
 
-isa(<<"keyword">>) -> ?XSD_ANYURI;
-isa(<<"text">>) -> ?XSD_STRING;
-isa(<<"long">>) -> ?XSD_INTEGER;
-isa(<<"double">>) -> ?XSD_DECIMAL;
-isa(<<"boolean">>) -> ?XSD_BOOLEAN;
-isa(<<"date">>) -> ?XSD_DATETIME;
-isa(<<"geo_shape">>) -> ?GEORSS_JSON;
-isa(<<"geo_point">>) -> ?GEORSS_POINT;
+isa(#{<<"type">> := <<"keyword">>}) -> ?XSD_ANYURI;
+isa(#{<<"type">> := <<"text">>}) -> ?XSD_STRING;
+isa(#{<<"type">> := <<"long">>}) -> ?XSD_INTEGER;
+isa(#{<<"type">> := <<"double">>}) -> ?XSD_DECIMAL;
+isa(#{<<"type">> := <<"boolean">>}) -> ?XSD_BOOLEAN;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"yyyy-MM-dd'T'HH:mm:ssZ||yyyyMMdd'T'HHmmssZ">>}) -> ?XSD_DATETIME;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"yyyy-MM-dd||yyyyMMdd">>}) -> ?XSD_DATE;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"HH:mm:ssZ||HHmmssZ">>}) -> ?XSD_TIME;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"yyyy-MM">>}) -> ?XSD_YEARMONTH;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"--MM-dd">>}) -> ?XSD_MONTHDAY;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"yyyy">>}) -> ?XSD_YEAR;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"MM">>}) -> ?XSD_MONTH;
+isa(#{<<"type">> := <<"date">>, <<"format">> := <<"dd">>}) -> ?XSD_DAY;
+isa(#{<<"type">> := <<"geo_shape">>}) -> ?GEORSS_JSON;
+isa(#{<<"type">> := <<"geo_point">>}) -> ?GEORSS_POINT;
 isa(_) -> undefined.
 
 

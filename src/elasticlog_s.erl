@@ -4,17 +4,15 @@
 -compile({parse_transform, category}).
 -include("elasticlog.hrl").
 
--export([select/3]).
+-export([stream/3]).
 
-select([Bucket | Keys], Head, Query) ->
-   select(Bucket, elasticlog_syntax:keys(Keys), Head, Query).
-
-select(Bucket, Keys, Head, Query) ->
+stream(Bucket, Keys, Head) ->
    fun(#elasticlog{implicit = Implicit, sock = Sock}) ->
       [identity ||
-         schema(Sock, Keys),
-         Schema <- lists:zip3(_, Keys, Head),
-         Aggs <- lists:map(fun elasticlog_syntax:aggregate/1, lists:zip(Query, Keys)),
+         ElasticKeys <- elasticlog_syntax:keys(Keys),
+         schema(Sock, ElasticKeys),
+         Schema <- lists:zip3(_, ElasticKeys, Head),
+         Aggs <- lists:map(fun elasticlog_syntax:aggregate/1, Keys),
          q(Schema, Implicit, Aggs),
          log_elastic_query(_),
          esio:lookup(Sock, Bucket, _, 10000),

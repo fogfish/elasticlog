@@ -15,10 +15,10 @@
 append(Sock, {_, _, _} = Fact, Timeout) ->
    append(Sock, semantic:typed(Fact), Timeout);
 
-append(Sock, #{s := S, p := P, o:= O, type := Type}, Timeout) ->
-   JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
-   JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
-   JsonO = elasticlog_codec:encode(Type, O),
+append(Sock, #{s := S, p := P, o:= O}, Timeout) ->
+   JsonS = semantic:to_json(S),
+   JsonP = semantic:to_json(P),
+   JsonO = semantic:to_json(O),
    esio:update(Sock, identity(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Timeout);
 
 append(Sock, #{} = JsonLD, Timeout) ->
@@ -35,10 +35,10 @@ append(Sock, #{} = JsonLD, Timeout) ->
 append_(Sock, {_, _, _} = Fact, Flag) ->
    append_(Sock, semantic:typed(Fact), Flag);
 
-append_(Sock, #{s := S, p := P, o:= O, type := Type}, Flag) ->
-   JsonS = elasticlog_codec:encode(?XSD_ANYURI, S),
-   JsonP = elasticlog_codec:encode(?XSD_ANYURI, P),
-   JsonO = elasticlog_codec:encode(Type, O),
+append_(Sock, #{s := S, p := P, o:= O}, Flag) ->
+   JsonS = semantic:to_json(S),
+   JsonP = semantic:to_json(P),
+   JsonO = semantic:to_json(O),
    esio:update_(Sock, identity(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Flag);
 
 append_(Sock, #{} = JsonLD, Flag) ->
@@ -49,7 +49,6 @@ append_(Sock, #{} = JsonLD, Flag) ->
       {error, nocontent},
       semantic:jsonld(JsonLD)
    ).
-
 
 
 %%

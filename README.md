@@ -30,7 +30,7 @@ If you use `rebar3` you can include the library in your project with
 The library requires Elastic search as a storage back-end. Use the docker container for development purpose.
 
 ```bash
-docker run -it -p 9200:9200 fogfish/elasticsearch:6.2.3
+docker run -p 9200:9200 -d fogfish/elasticsearch:6.2.3
 ```
 
 Build library and run the development console
@@ -253,9 +253,11 @@ x(_) :-
 ```erlang
 %%
 %% define a query to count release per decade
-Q = "?- movie(_). 
-movie(year) :- 
-   .select(\"imdb\", \"schema:year\"), histogram(10).".
+Q = "
+   ?- imdb:year(_).
+
+   imdb:year(histogram 10 \"schema:year\").
+".
 
 %%
 %% parse and compile a query into executable function
@@ -276,16 +278,16 @@ stream:list(elasticlog:q(F, Sock)).
 ```erlang
 %%
 %% define a query to count releases by 5 top directors
-Q = "?- h(_, _). 
-movie(id) :- 
-   .select(\"imdb\", \"schema:director\"), category(5).
+Q = "
+   ?- top(_, _).
 
-person(id, name) :- 
-   .stream(\"imdb\", \"rdf:id\", \"schema:name\").
+   imdb:director(category 5 \"schema:director\").
+   imdb:person(\"rdf:id\", \"schema:name\").
 
-h(name, id) :-
-   movie(id),
-   person(id, name).".
+   top(name, id) :- 
+      imdb:director(id),
+      imdb:persion(id, name).
+".
 
 %%
 %% parse and compile a query into executable function
@@ -311,9 +313,11 @@ The library support an implicit query constrains. It supports a use-case where c
 ```erlang
 %%
 %% define a query goal to match a person with `name` equal to `Ridley Scott`.
-Q = "?- person(_, \"Ridley Scott\").
-person(id, name) :- 
-   .stream(\"imdb\", \"rdf:id\", \"schema:name\").".
+Q = "
+   ?- imdb:person(_, \"Ridley Scott\").
+
+   imdb:person(\"rdf:id\", \"schema:name\").
+s".
 
 %%
 %% parse and compile a query into executable function

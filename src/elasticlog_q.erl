@@ -21,17 +21,14 @@
 
 -export([stream/3]).
 
-% stream([Bucket | Keys], Head) ->
-%    stream(Bucket, elasticlog_syntax:keys(Keys), Head).
-
 stream(Bucket, Keys, Head) ->
    fun(#elasticlog{implicit = Implicit, sock = Sock}) ->
       [identity ||
-         K <- elasticlog_syntax:keys(Keys),
-         schema(Sock, K),
-         Schema <- lists:zip3(_, K, Head),
+         ElasticKeys <- elasticlog_syntax:keys(Keys),
+         schema(Sock, ElasticKeys),
+         Schema <- lists:zip3(_, ElasticKeys, Head),
          elasticlog_syntax:pattern(Schema, Implicit),
-         enable_sorting(hd(K), _),
+         enable_sorting(hd(ElasticKeys), _),
          log_elastic_query(_),
          esio:stream(Sock, Bucket, _),
          head(Schema, _)
@@ -40,7 +37,9 @@ stream(Bucket, Keys, Head) ->
 
 schema(Sock, Keys) ->
    {ok, Schema} = elasticlog:schema(Sock),
-   [maps:get(Key, Schema) || {_, Key} <- Keys].
+   X = [maps:get(Key, Schema) || {_, Key} <- Keys],
+   io:format("==> ~p~n", [X]),
+   X.
 
 head(Schema, Stream) ->
    stream:map(
@@ -49,7 +48,7 @@ head(Schema, Stream) ->
             fun({Type, {_, Key}, _}) ->
                Path = binary:split(Key, <<$.>>, [global]),
                Lens = lens:c([lens:at(X) || X <- Path]),
-               [option || lens:get(Lens, Json), elasticlog_codec:decode(Type, _)]
+               [option || lens:get(Lens, Json), semantic:as_text(Type, _)]
             end,
             Schema
          )

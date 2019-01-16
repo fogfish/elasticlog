@@ -5,6 +5,7 @@
 
 -export([
    keys/1
+,  is_aggregate/1
 ,  pattern/2
 ,  aggregate/1
 ]).
@@ -15,19 +16,38 @@ keys([{option, _} = Key | Keys]) ->
    [Key | keys(Keys)];
 keys([{sortby, _} = Key | Keys]) ->
    [Key | keys(Keys)];
+keys([{required, _} = Key | Keys]) ->
+   [Key | keys(Keys)];
 keys([Key | Keys]) when is_binary(Key) ->
+   [{required, Key} | keys(Keys)];
+keys([{_, Key} | Keys]) ->
+   [{required, Key} | keys(Keys)];
+%% Note: following patterns are required to implement aggregations
+keys([{_, _, Key} | Keys]) ->
+   [{required, Key} | keys(Keys)];
+keys([{_, _, _, Key} | Keys]) ->
+   [{required, Key} | keys(Keys)];
+keys([{_, _, _, _, Key} | Keys]) ->
+   [{required, Key} | keys(Keys)];
+keys([{_, _, _, _, _, Key} | Keys]) ->
    [{required, Key} | keys(Keys)];
 keys([]) ->
    [].
 
-% keys([<<$?, Key/binary>> | Keys]) ->
-%    [{option, Key} | keys(Keys)];
-% keys([<<$^, Key/binary>> | Keys]) ->
-%    [{sortby, Key} | keys(Keys)];
-% keys([Key | Keys]) ->
-%    [{required, Key} | keys(Keys)];
-% keys([]) ->
-%    [].
+%%
+%%
+is_aggregate([{option, _} | Keys]) ->
+   is_aggregate(Keys);
+is_aggregate([{sortby, _} | Keys]) ->
+   is_aggregate(Keys);
+is_aggregate([{required, _} | Keys]) ->
+   is_aggregate(Keys);
+is_aggregate([Key | Keys]) when is_binary(Key) ->
+   is_aggregate(Keys);
+is_aggregate([_ | _]) ->
+   true;
+is_aggregate([]) ->
+   false.
 
 %%
 %% Build a pattern match elastic search query
@@ -67,6 +87,9 @@ match({?GEORSS_JSON, _, _}) ->
    [];
 match({?XSD_STRING, {_, ElasticKey}, Pattern}) -> 
    elastic_query_string(ElasticKey, Pattern);
+match({Type, {_, ElasticKey}, #{<<"key">> := IRI}}) ->
+   %% Note: this is special case to support join via aggregated value
+   elastic_match(Type, ElasticKey, {iri, IRI});
 match({Type, {_, ElasticKey}, Pattern}) ->
    elastic_match(Type, ElasticKey, Pattern);
 match(_) ->
@@ -100,7 +123,7 @@ elastic_query_string(ElasticKey, Value)
 
 elastic_query_string(ElasticKey, [H | _] = Value)
  when not is_tuple(H) ->
-   [#{query_string => #{default_field => ElasticKey, 'query' => scalar:s(lists:join(<<" AND ">>, Value))}}];
+   [#{query_string => #{default_field => ElasticKey, 'query' => typecast:s(lists:join(<<" AND ">>, Value))}}];
 
 elastic_query_string(_, _) ->
    []. 
@@ -108,21 +131,21 @@ elastic_query_string(_, _) ->
 
 
 %%
-elastic_match(Type, ElasticKey, Value)
+elastic_match(_Type, ElasticKey, Value)
  when not is_list(Value) ->
    %% range filter is encoded as list at datalog: [{'>', ...}, ...]
-   [#{match => #{ElasticKey => elasticlog_codec:encode(Type, Value)}}];
+   [#{match => #{ElasticKey => semantic:to_json(Value)}}];
 
-elastic_match(Type, ElasticKey, [H | _] = Value)
+elastic_match(_Type, ElasticKey, [H | _] = Value)
  when not is_tuple(H) ->
-   [#{match => #{ElasticKey => elasticlog_codec:encode(Type, X)}} || X <- Value];
+   [#{match => #{ElasticKey => semantic:to_json(X)}} || X <- Value];
 
 elastic_match(_, _, _) ->
    [].
 
 %%
-elastic_not_match(Type, ElasticKey, Value) ->
-   [#{term => #{ElasticKey => elasticlog_codec:encode(Type, Value)}}].
+elastic_not_match(_Type, ElasticKey, Value) ->
+   [#{term => #{ElasticKey => semantic:to_json(Value)}}].
 
 
 %%
@@ -143,11 +166,11 @@ filter(_) ->
 
 
 %%
-elastic_filter(Type, ElasticKey, [H | _] = Value)
+elastic_filter(_Type, ElasticKey, [H | _] = Value)
  when is_tuple(H) ->
    %% range filter is encoded as list at datalog: [{'>', ...}, ...]
    #{range => 
-      #{ElasticKey => maps:from_list([{elastic_compare(Op), elasticlog_codec:encode(Type, X)} || {Op, X} <- Value, Op /= '=/='])}
+      #{ElasticKey => maps:from_list([{elastic_compare(Op), semantic:to_json(X)} || {Op, X} <- Value, Op /= '=/='])}
    };
 
 elastic_filter(_, _, _) ->
@@ -200,34 +223,7 @@ polygon([]) ->
 
 %%
 %%
-aggregate({#{'@' := identity}, {_, Key}}) ->
-   {identity, Key, undefined};
-
-aggregate({#{'@' := category, '_' := [N]}, {_, Key}}) ->
-   {bucket, Key,
-      #{
-         Key => #{
-            terms => #{
-               field => Key,
-               size  => N
-            }
-         }
-      }
-   };
-
-aggregate({#{'@' := category}, {_, Key}}) ->
-   {bucket, Key,
-      #{
-         Key => #{
-            terms => #{
-               field => Key
-            }
-         }
-      }
-   };
-
-
-aggregate({#{'@' := histogram, '_' := [Bin]}, {_, Key}}) ->
+aggregate({histogram, Bin, Key}) ->
    {bucket, Key,
       #{
          Key => #{
@@ -239,7 +235,7 @@ aggregate({#{'@' := histogram, '_' := [Bin]}, {_, Key}}) ->
       }
    };
 
-aggregate({#{'@' := histogram, '_' := [Min, Max, Bin]}, {_, Key}}) ->
+aggregate({histogram, Min, Max, Bin, Key}) ->
    {bucket, Key,
       #{
          Key => #{
@@ -255,7 +251,30 @@ aggregate({#{'@' := histogram, '_' := [Min, Max, Bin]}, {_, Key}}) ->
       }
    };
 
-aggregate({#{'@' := geohash, '_' := [Bin]}, {_, Key}}) ->
+aggregate({category, N, Key}) ->
+   {bucket, Key,
+      #{
+         Key => #{
+            terms => #{
+               field => Key,
+               size  => N
+            }
+         }
+      }
+   };
+
+aggregate({category, Key}) ->
+   {bucket, Key,
+      #{
+         Key => #{
+            terms => #{
+               field => Key
+            }
+         }
+      }
+   };
+
+aggregate({geohash, Bin, Key}) ->
    {bucket, Key,
       #{
          Key => #{
@@ -265,9 +284,9 @@ aggregate({#{'@' := geohash, '_' := [Bin]}, {_, Key}}) ->
             }
          }
       }
-   };   
+   };
 
-aggregate({#{'@' := stats}, {_, Key}}) ->
+aggregate({stats, Key}) ->
    {object, Key,
       #{
          Key => #{
@@ -278,7 +297,7 @@ aggregate({#{'@' := stats}, {_, Key}}) ->
       }
    };
 
-aggregate({#{'@' := percentiles}, {_, Key}}) ->
+aggregate({percentiles, Key}) ->
    {object, Key,
       #{
          Key => #{
@@ -289,7 +308,7 @@ aggregate({#{'@' := percentiles}, {_, Key}}) ->
       }
    };
 
-aggregate({#{'@' := geo_bounds}, {_, Key}}) ->
+aggregate({geo_bounds, Key}) ->
    {object, Key,
       #{
          Key => #{
@@ -300,7 +319,7 @@ aggregate({#{'@' := geo_bounds}, {_, Key}}) ->
       }
    };
 
-aggregate({#{'@' := geo_centroid}, {_, Key}}) ->
+aggregate({geo_centroid, Key}) ->
    {object, Key,
       #{
          Key => #{
@@ -311,7 +330,7 @@ aggregate({#{'@' := geo_centroid}, {_, Key}}) ->
       }
    };
 
-aggregate({#{'@' := sum}, {_, Key}}) ->
+aggregate({sum, Key}) ->
    {metric, Key,
       #{
          Key => #{
@@ -322,7 +341,7 @@ aggregate({#{'@' := sum}, {_, Key}}) ->
       }
    };
 
-aggregate({#{'@' := count}, {_, Key}}) ->
+aggregate({count, Key}) ->
    {metric, Key,
       #{
          Key => #{
@@ -331,4 +350,8 @@ aggregate({#{'@' := count}, {_, Key}}) ->
             }
          }
       }
-   }.
+   };
+
+aggregate(Key) ->
+   {identity, Key, undefined}.
+

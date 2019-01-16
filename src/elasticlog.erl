@@ -23,6 +23,7 @@
 
 -export([start/0]).
 -export([
+   c/1,
    q/2,
    q/3,
    schema/1,
@@ -33,10 +34,9 @@
    append_/2,
    append_/3,
    stream/3,
-   select/3,
    encode/1,
    decode/1,
-   jsonify/2,
+   jsonify/1,
    identity/1
 ]).
 
@@ -51,6 +51,11 @@
 %%
 start() ->
    application:ensure_all_started(?MODULE).
+
+%%
+%% compiles datalog query
+c(Datalog) ->
+   datalog:c(?MODULE, datalog:p(Datalog), [{return, maps}]).
 
 %%
 %% evaluate query
@@ -140,10 +145,15 @@ append_(Sock, Fact, Flag) ->
 %%
 %% datalog generators
 stream({iri, Bucket, _}, Keys, Head) ->
-   elasticlog_q:stream(Bucket, Keys, Head).
+   case elasticlog_syntax:is_aggregate(Keys) of
+      false ->
+         elasticlog_q:stream(Bucket, Keys, Head);
+      true  ->
+         elasticlog_s:stream(Bucket, Keys, Head)
+   end;
 
-select(Keys, Head, Query) ->
-   elasticlog_s:select(Keys, Head, Query). 
+stream(Bucket, Keys, Head) when is_atom(Bucket) ->
+   stream({iri, typecast:s(Bucket), undefined}, Keys, Head).
 
 %%
 %% encodes JSON-LD to storage format
@@ -173,45 +183,16 @@ decode(#{<<"@id">> := _} = Json) ->
 
 %%
 %% encodes deducted fact(s) to json format
-jsonify(_, ?stream() = Stream) ->
-   Stream;
-jsonify([_ | Schema], #stream{} = Stream) ->
+jsonify(Stream) ->
    stream:map(
-      fun(Fact) ->
-         maps:from_list([
-            {Key, json_val(Val)} || 
-               {Key, Val} <- lists:zip(Schema, Fact), Val /= ?None
-         ])
+      fun(Fact) -> 
+         maps:map(
+            fun(_, Val) -> semantic:to_json(Val) end,
+            Fact
+         )
       end,
       Stream
    ).
-
-json_val({iri, Uri}) -> 
-   Uri;
-json_val({iri, Prefix, Suffix}) -> 
-   <<Prefix/binary, $:, Suffix/binary>>;
-json_val({Lat, Lng}) ->
-   <<(scalar:s(Lat))/binary, $ , (scalar:s(Lng))/binary>>;
-json_val(#{<<"type">> := _, <<"coordinates">> := _} = GeoJson) ->
-   GeoJson;
-json_val(#{<<"key">> := _, <<"count">> := _} = Bucket) ->
-   Bucket;
-json_val(#{} = Json) ->
-   Json;
-json_val({_, _, _} = T) -> 
-   scalar:s(tempus:encode(T));
-json_val(Value) when is_atom(Value) -> 
-   scalar:s(Value);
-json_val(Value) when is_float(Value) -> 
-   Value;
-json_val(Value) when is_integer(Value) -> 
-   Value;
-json_val(Value) when is_binary(Value) -> 
-   Value;
-json_val(Value) when is_list(Value) ->
-   [json_val(X) || X <- Value];
-json_val(Value) ->
-   scalar:s(Value).
 
 %%
 %% encode any string to unique knowledge identity

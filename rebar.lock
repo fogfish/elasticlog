@@ -1,7 +1,7 @@
 {"1.1.0",
 [{<<"datalog">>,
   {git,"https://github.com/fogfish/datalog",
-       {ref,"5a718058e87374f0d5fc3fe0d65509150107da82"}},
+       {ref,"3f7ac6126ee92cc0add228740fc0300107619d57"}},
   0},
  {<<"datum">>,{pkg,<<"datum">>,<<"4.5.0">>},0},
  {<<"esio">>,
@@ -33,7 +33,7 @@
  {<<"pipe">>,{pkg,<<"pipes">>,<<"2.0.0">>},2},
  {<<"semantic">>,
   {git,"https://github.com/fogfish/semantic",
-       {ref,"875fde615b003189f95e32620f309d2b4eda89f6"}},
+       {ref,"3b7aa85234086f6f858bd44940a8abbe9a43e76e"}},
   0},
  {<<"uid">>,{pkg,<<"uid">>,<<"1.3.3">>},1}]}.
 [
