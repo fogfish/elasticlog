@@ -80,8 +80,9 @@ stream:foreach(
 ```
 
 Querying and joining semantical data requires translation of facts into n-ary relation. 
-The library implements a σ function (`.stream`) that produces a stream of tuple from any 
-bucket. It takes a name of bucket as first argument followed by predicate names.
+The library implements a σ function that produces a stream of tuple from any bucket.
+The datalog notation support compact IRI as predicate name. The library uses IRI notation to 
+project ground-truth predicate on table.
 
 
 **Basic queries**
@@ -135,7 +136,7 @@ F = datalog:c(elasticlog, datalog:p(Q)).
 stream:list(elasticlog:q(F, Sock)).
 ```
 
-**Predicates**
+**Infix Predicates**
 
 ```erlang
 %%
