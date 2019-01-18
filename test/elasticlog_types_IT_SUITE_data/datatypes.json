@@ -1,0 +1,81 @@
+[
+   {
+      "rdf:id": "xsd:anyURI"
+   ,  "xsd:anyURI": "http://example.com/a"
+   }
+
+,  {
+      "rdf:id": "xsd:string"
+   ,  "xsd:string": "example"
+   }
+
+,  {
+      "rdf:id": "xsd:integer"
+   ,  "xsd:integer": 123
+   }
+
+,  {
+      "rdf:id": "xsd:decimal"
+   ,  "xsd:decimal": 12.3
+   }
+
+,  {
+      "rdf:id": "xsd:boolean"
+   ,  "xsd:boolean": true
+   }
+
+,  {
+      "rdf:id": "xsd:dateTime"
+   ,  "xsd:dateTime": "2001-08-08T10:15:30Z"
+   }
+
+,  {
+      "rdf:id": "xsd:date"
+   ,  "xsd:date": "2001-08-08"
+   }
+
+,  {
+      "rdf:id": "xsd:time"
+   ,  "xsd:time": "10:15:30Z"
+   }
+
+,  {
+      "rdf:id": "xsd:gYearMonth"
+   ,  "xsd:gYearMonth": "2001-08"
+   }
+
+,  {
+      "rdf:id": "xsd:gMonthDay"
+   ,  "xsd:gMonthDay": "--08-08"
+   }
+
+,  {
+      "rdf:id": "xsd:gYear"
+   ,  "xsd:gYear": "2001"
+   }
+
+,  {
+      "rdf:id": "xsd:gMonth"
+   ,  "xsd:gMonth": "08"
+   }
+
+,  {
+      "rdf:id": "xsd:gDay"
+   ,  "xsd:gDay": "08"
+   }
+
+,  {
+      "rdf:id": "georss:point"
+   ,  "georss:point": "60.1,23.2"
+   }
+
+,  {
+      "rdf:id": "georss:hash"
+   ,  "georss:hash": "ueh6xcb"
+   }
+
+,  {
+      "rdf:id": "georss:json"
+   ,  "georss:json": {"type": "Point", "coordinates": [23.2, 60.1]}
+   }
+]
