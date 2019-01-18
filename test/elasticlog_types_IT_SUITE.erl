@@ -1,5 +1,5 @@
 %% @doc
-%%   integration test suite (requires elasticlog at localhost)
+%%   integration test suite (requires elastic at localhost)
 %%
 %%   docker run -p 9200:9200 -d fogfish/elasticsearch:6.2.3
 %%
@@ -8,9 +8,7 @@
 
 -export([all/0, init_per_suite/1, end_per_suite/1]).
 -export([
-   schema/1
-,  intake/1
-,  xsd_anyuri/1
+   xsd_anyuri/1
 ,  xsd_string/1
 ,  xsd_integer/1
 ,  xsd_decimal/1
@@ -39,6 +37,10 @@ all() ->
 init_per_suite(Config) ->
    {ok, _} = elasticlog:start(),
    {ok, Sock} = esio:socket("http://localhost:9200/*"),
+   schema(Config),
+   intake(Config),
+   %% let's wait when index is refreshed
+   timer:sleep(5000),
    [{socket, Sock} | Config].
 
 end_per_suite(Config) ->
@@ -51,7 +53,7 @@ datalog(Datalog) ->
 %%
 %% Unit tests
 %%
-schema(_) ->
+schema(Config) ->
    {ok, Sock} = esio:socket("http://localhost:9200/datatypes"),
 
    ok = elasticlog:schema(Sock, #{
@@ -92,7 +94,7 @@ intake(Config) ->
 
 xsd_anyuri(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:anyURI\", _).
+      ?- datatypes(xsd:anyURI, _).
 
       datatypes(\"rdf:id\", \"xsd:anyURI\").
    "),
@@ -104,7 +106,7 @@ xsd_anyuri(Config) ->
 
 xsd_string(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:string\", _).
+      ?- datatypes(xsd:string, _).
 
       datatypes(\"rdf:id\", \"xsd:string\").
    "),
@@ -116,7 +118,7 @@ xsd_string(Config) ->
 
 xsd_integer(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:integer\", _).
+      ?- datatypes(xsd:integer, _).
 
       datatypes(\"rdf:id\", \"xsd:integer\").
    "),
@@ -128,7 +130,7 @@ xsd_integer(Config) ->
 
 xsd_decimal(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:decimal\", _).
+      ?- datatypes(xsd:decimal, _).
 
       datatypes(\"rdf:id\", \"xsd:decimal\").
    "),
@@ -140,7 +142,7 @@ xsd_decimal(Config) ->
 
 xsd_boolean(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:boolean\", _).
+      ?- datatypes(xsd:boolean, _).
 
       datatypes(\"rdf:id\", \"xsd:boolean\").
    "),
@@ -152,7 +154,7 @@ xsd_boolean(Config) ->
 
 xsd_dateTime(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:dateTime\", _).
+      ?- datatypes(xsd:dateTime, _).
 
       datatypes(\"rdf:id\", \"xsd:dateTime\").
    "),
@@ -164,7 +166,7 @@ xsd_dateTime(Config) ->
 
 xsd_date(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:date\", _).
+      ?- datatypes(xsd:date, _).
 
       datatypes(\"rdf:id\", \"xsd:date\").
    "),
@@ -176,7 +178,7 @@ xsd_date(Config) ->
 
 xsd_time(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:time\", _).
+      ?- datatypes(xsd:time, _).
 
       datatypes(\"rdf:id\", \"xsd:time\").
    "),
@@ -188,7 +190,7 @@ xsd_time(Config) ->
 
 xsd_yearmonth(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:gYearMonth\", _).
+      ?- datatypes(xsd:gYearMonth, _).
 
       datatypes(\"rdf:id\", \"xsd:gYearMonth\").
    "),
@@ -200,7 +202,7 @@ xsd_yearmonth(Config) ->
 
 xsd_monthday(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:gMonthDay\", _).
+      ?- datatypes(xsd:gMonthDay, _).
 
       datatypes(\"rdf:id\", \"xsd:gMonthDay\").
    "),
@@ -212,7 +214,7 @@ xsd_monthday(Config) ->
 
 xsd_year(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:gYear\", _).
+      ?- datatypes(xsd:gYear, _).
 
       datatypes(\"rdf:id\", \"xsd:gYear\").
    "),
@@ -224,7 +226,7 @@ xsd_year(Config) ->
 
 xsd_month(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:gMonth\", _).
+      ?- datatypes(xsd:gMonth, _).
 
       datatypes(\"rdf:id\", \"xsd:gMonth\").
    "),
@@ -236,7 +238,7 @@ xsd_month(Config) ->
 
 xsd_day(Config) ->
    F = datalog("
-      ?- datatypes(\"xsd:gDay\", _).
+      ?- datatypes(xsd:gDay, _).
 
       datatypes(\"rdf:id\", \"xsd:gDay\").
    "),
@@ -247,7 +249,7 @@ xsd_day(Config) ->
 
 georss_point(Config) ->
    F = datalog("
-      ?- datatypes(\"georss:point\", _).
+      ?- datatypes(georss:point, _).
 
       datatypes(\"rdf:id\", \"georss:point\").
    "),
@@ -259,7 +261,7 @@ georss_point(Config) ->
 
 georss_hash(Config) ->
    F = datalog("
-      ?- datatypes(\"georss:hash\", _).
+      ?- datatypes(georss:hash, _).
 
       datatypes(\"rdf:id\", \"georss:hash\").
    "),
@@ -271,7 +273,7 @@ georss_hash(Config) ->
 
 georss_json(Config) ->
    F = datalog("
-      ?- datatypes(\"georss:json\", _).
+      ?- datatypes(georss:json, _).
 
       datatypes(\"rdf:id\", \"georss:json\").
    "),

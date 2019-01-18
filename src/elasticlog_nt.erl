@@ -54,7 +54,7 @@ append_(Sock, #{} = JsonLD, Flag) ->
 %%
 %%
 identity(S) ->
-   base64( crypto:hash(md5, [<<(erlang:phash2(S)):32>>]) ).
+   base64( crypto:hash(md5, semantic:to_json(S)) ).
 
 %%
 %%

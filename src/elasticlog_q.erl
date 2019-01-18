@@ -37,9 +37,7 @@ stream(Bucket, Keys, Head) ->
 
 schema(Sock, Keys) ->
    {ok, Schema} = elasticlog:schema(Sock),
-   X = [maps:get(Key, Schema) || {_, Key} <- Keys],
-   io:format("==> ~p~n", [X]),
-   X.
+   [maps:get(Key, Schema) || {_, Key} <- Keys].
 
 head(Schema, Stream) ->
    stream:map(

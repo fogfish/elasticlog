@@ -8,9 +8,7 @@
 
 -export([all/0, init_per_suite/1, end_per_suite/1]).
 -export([
-   schema/1
-,  intake/1
-,  basic_facts_query/1
+   basic_facts_query/1
 ,  basic_facts_match/1
 ,  basic_facts_infix/1
 ,  join_facts_with_bag/1
@@ -31,6 +29,10 @@ all() ->
 init_per_suite(Config) ->
    {ok, _} = elasticlog:start(),
    {ok, Sock} = esio:socket("http://localhost:9200/*"),
+   schema(Config),
+   intake(Config),
+   %% let's wait when index is refreshed
+   timer:sleep(5000),
    [{socket, Sock} | Config].
 
 end_per_suite(Config) ->
@@ -96,16 +98,16 @@ basic_facts_match(Config) ->
    F = datalog("
       ?- movie(_, _). 
 
-      imdb:movie(\"rdf:id\", \"schema:title\", \"schema:year\").
+      imdb:movie(sortby \"rdf:id\", \"schema:title\", \"schema:year\").
 
       movie(id, title) :- 
          imdb:movie(id, title, 1987).
    "),
 
    [
+      [{iri,<<"http://example.org/movie/202">>}, <<"Predator">>],
       [{iri,<<"http://example.org/movie/203">>}, <<"Lethal Weapon">>],
-      [{iri,<<"http://example.org/movie/204">>}, <<"RoboCop">>],
-      [{iri,<<"http://example.org/movie/202">>}, <<"Predator">>]
+      [{iri,<<"http://example.org/movie/204">>}, <<"RoboCop">>]
    ] = stream:list(elasticlog:q(F, ?config(socket, Config))).
 
 %%
@@ -114,7 +116,7 @@ basic_facts_infix(Config) ->
    F = datalog("
       ?- movie(_, _).
 
-      imdb:movie(\"rdf:id\", \"schema:title\", \"schema:year\").
+      imdb:movie(sortby \"rdf:id\", \"schema:title\", \"schema:year\").
 
       movie(title, year) :- 
          imdb:movie(id, title, year), year < 1984.
@@ -122,9 +124,9 @@ basic_facts_infix(Config) ->
 
    [
       [<<"First Blood">>, 1982],
+      [<<"Alien">>, 1979],
       [<<"Mad Max">>, 1979],
-      [<<"Mad Max 2">>, 1981],
-      [<<"Alien">>, 1979]
+      [<<"Mad Max 2">>, 1981]
    ] = stream:list(elasticlog:q(F, ?config(socket, Config))).
 
 
@@ -134,11 +136,11 @@ join_facts_with_bag(Config) ->
    F = datalog("
       ?- actors(_, _).
 
-      imdb:movie(\"schema:title\", \"schema:year\", \"schema:cast\").
+      imdb:movie(sortby \"rdf:id\", \"schema:title\", \"schema:year\", \"schema:cast\").
       imdb:person(\"rdf:id\", \"schema:name\").
 
       actors(title, name) :- 
-         imdb:movie(title, year, cast), 
+         imdb:movie(id, title, year, cast), 
          .flat(cast), 
          imdb:person(cast, name), 
          year < 1984.
@@ -148,15 +150,15 @@ join_facts_with_bag(Config) ->
       [<<"First Blood">>,<<"Sylvester Stallone">>],
       [<<"First Blood">>,<<"Richard Crenna">>],
       [<<"First Blood">>,<<"Brian Dennehy">>],
+      [<<"Alien">>,<<"Tom Skerritt">>],
+      [<<"Alien">>,<<"Sigourney Weaver">>],
+      [<<"Alien">>,<<"Veronica Cartwright">>],
       [<<"Mad Max">>,<<"Mel Gibson">>],
       [<<"Mad Max">>,<<"Steve Bisley">>],
       [<<"Mad Max">>,<<"Joanne Samuel">>],
       [<<"Mad Max 2">>,<<"Mel Gibson">>],
       [<<"Mad Max 2">>,<<"Michael Preston">>],
-      [<<"Mad Max 2">>,<<"Bruce Spence">>],
-      [<<"Alien">>,<<"Tom Skerritt">>],
-      [<<"Alien">>,<<"Sigourney Weaver">>],
-      [<<"Alien">>,<<"Veronica Cartwright">>]
+      [<<"Mad Max 2">>,<<"Bruce Spence">>]
    ] = stream:list(elasticlog:q(F, ?config(socket, Config))).
 
 
@@ -166,12 +168,12 @@ join_facts(Config) ->
    F = datalog("
       ?- movie(_).
 
-      imdb:movie(\"schema:title\", \"schema:cast\").
+      imdb:movie(sortby \"rdf:id\", \"schema:title\", \"schema:cast\").
       imdb:person(\"rdf:id\", \"schema:name\").
 
       movie(title) :- 
          imdb:person(id, name), 
-         imdb:movie(title, id), 
+         imdb:movie(movie, title, id), 
          name = \"Sylvester Stallone\".
    "),
 
