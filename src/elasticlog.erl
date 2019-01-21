@@ -185,10 +185,13 @@ decode(#{<<"@id">> := _} = Json) ->
 %% encodes deducted fact(s) to json format
 jsonify(Stream) ->
    stream:map(
-      fun(Fact) -> 
+      fun(Fact) ->
          maps:map(
             fun(_, Val) -> semantic:to_json(Val) end,
-            Fact
+            maps:filter(
+               fun(_, undefined) -> false; (_, _) -> true end,
+               Fact
+            )
          )
       end,
       Stream
