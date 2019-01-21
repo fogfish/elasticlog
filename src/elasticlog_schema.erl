@@ -105,6 +105,7 @@ isa(#{<<"type">> := <<"date">>, <<"format">> := <<"--MM-dd">>}) -> ?XSD_MONTHDAY
 isa(#{<<"type">> := <<"date">>, <<"format">> := <<"yyyy">>}) -> ?XSD_YEAR;
 isa(#{<<"type">> := <<"date">>, <<"format">> := <<"MM">>}) -> ?XSD_MONTH;
 isa(#{<<"type">> := <<"date">>, <<"format">> := <<"dd">>}) -> ?XSD_DAY;
+isa(#{<<"type">> := <<"date">>}) -> ?XSD_DATETIME; % fallback to xsd_datetime if schema is defined outside of elasticlog 
 isa(#{<<"type">> := <<"geo_shape">>}) -> ?GEORSS_JSON;
 isa(#{<<"type">> := <<"geo_point">>}) -> ?GEORSS_POINT;
 isa(_) -> undefined.
