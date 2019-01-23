@@ -186,15 +186,15 @@ elastic_compare('=<') -> lte.
 
 
 %%
-elastic_geo_distance(ElasticKey, [GeoHash, Radius]) ->
+elastic_geo_distance(ElasticKey, {GeoHash, Radius}) ->
    #{geo_distance => #{distance => Radius, ElasticKey => GeoHash}};
-elastic_geo_distance(ElasticKey, [Lng, Lat, Radius]) ->
+elastic_geo_distance(ElasticKey, {Lng, Lat, Radius}) ->
    #{geo_distance => #{distance => Radius, ElasticKey => [Lng, Lat]}};
 elastic_geo_distance(_, _) ->
    [].
 
 %%
-elastic_geo_shape(ElasticKey, [Index, Id, Field]) ->
+elastic_geo_shape(ElasticKey, {Index, Id, Field}) ->
    #{geo_shape => #{
       ElasticKey => #{
          indexed_shape => #{
