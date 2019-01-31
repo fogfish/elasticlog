@@ -1,7 +1,7 @@
 {application, elasticlog,
    [
       {description, "elastic search datalog"},
-      {vsn,         "1.0.1"},
+      {vsn,         "1.1.0"},
       {modules,     []},
       {registered,  []},
       {applications,[
@@ -11,6 +11,7 @@
         ,datalog
         ,esio
       ]},
+      {mod, {elasticlog_app, []}},
       {env, []}
    ]
 }.  

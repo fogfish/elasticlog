@@ -16,6 +16,7 @@
 ,  rollup_facts/1
 ,  rollup_facts_and_join/1
 ,  implicit/1
+,  equivalent/1
 ]).
 
 all() -> 
@@ -234,4 +235,18 @@ implicit(Config) ->
    [
       [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
    ] = stream:list(elasticlog:q(F, #{<<"schema:name">> => <<"Ridley Scott">>}, ?config(socket, Config))).
+
+%%
+%%
+equivalent(Config) ->
+   F = datalog("
+      ?- imdb:person(_, \"Ridley Scott\").
+
+      imdb:person(\"rdf:id\", \"foaf:name\").
+   "),
+
+   [
+      [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
+   ] = stream:list(elasticlog:q(F, undefined, #{<<"foaf:name">> => <<"schema:name">>}, ?config(socket, Config))).
+
 

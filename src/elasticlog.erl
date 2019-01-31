@@ -26,6 +26,7 @@
    c/1,
    q/2,
    q/3,
+   q/4,
    schema/1,
    schema/2,
    schema/3,
@@ -64,6 +65,9 @@ q(Lp, Sock) ->
 
 q(Lp, Implicit, Sock) ->
    Lp(#elasticlog{implicit = Implicit, sock = Sock}).
+
+q(Lp, Implicit, Equiv, Sock) ->
+   Lp(#elasticlog{implicit = Implicit, equivalent = Equiv, sock = Sock}).
 
 %%
 %% read semantic schema
@@ -183,6 +187,8 @@ decode(#{<<"@id">> := _} = Json) ->
 
 %%
 %% encodes deducted fact(s) to json format
+-spec jsonify(datum:stream()) -> datum:stream(). 
+
 jsonify(Stream) ->
    stream:map(
       fun(Fact) ->
@@ -199,6 +205,7 @@ jsonify(Stream) ->
 
 %%
 %% encode any string to unique knowledge identity
+-spec identity(_) -> binary().
+
 identity(Key) ->
    elasticlog_nt:identity(Key).
-

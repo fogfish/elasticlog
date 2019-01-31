@@ -7,10 +7,10 @@
 -export([stream/3]).
 
 stream(Bucket, Keys, Head) ->
-   fun(#elasticlog{implicit = Implicit, sock = Sock}) ->
+   fun(#elasticlog{implicit = Implicit, equivalent = Equiv, sock = Sock}) ->
       [identity ||
-         ElasticKeys <- elasticlog_syntax:keys(Keys),
-         schema(Sock, ElasticKeys),
+         ElasticKeys <- elasticlog_syntax:keys(Keys, Equiv),
+         schema(Sock, Bucket, ElasticKeys),
          Schema <- lists:zip3(_, ElasticKeys, Head),
          Aggs <- lists:map(fun elasticlog_syntax:aggregate/1, Keys),
          q(Schema, Implicit, Aggs),
@@ -20,8 +20,8 @@ stream(Bucket, Keys, Head) ->
       ]
    end.
 
-schema(Sock, Keys) ->
-   {ok, Schema} = elasticlog:schema(Sock),
+schema(Sock, Bucket, Keys) ->
+   Schema = elasticlog_schema:lookup(Sock, Bucket),
    [maps:get(Key, Schema) || {_, Key} <- Keys].
 
 %%
