@@ -4,7 +4,7 @@
 -include_lib("semantic/include/semantic.hrl").
 
 -export([
-   keys/1
+   keys/2
 ,  is_aggregate/1
 ,  pattern/2
 ,  aggregate/1
@@ -12,6 +12,11 @@
 
 %%
 %% we support an optional keys as part of logical statement
+keys(Keys, undefined) ->
+   keys(Keys);
+keys(Keys, Equiv) ->
+   keys([equivalent(X, Equiv) || X <- Keys]).
+
 keys([{option, _} = Key | Keys]) ->
    [Key | keys(Keys)];
 keys([{sortby, _} = Key | Keys]) ->
@@ -33,6 +38,11 @@ keys([{_, _, _, _, _, Key} | Keys]) ->
    [{required, Key} | keys(Keys)];
 keys([]) ->
    [].
+
+equivalent({Option, Key}, Equiv) ->
+   {Option, maps:get(Key, Equiv, Key)};
+equivalent(Key, Equiv) ->
+   maps:get(Key, Equiv, Key).
 
 %%
 %%

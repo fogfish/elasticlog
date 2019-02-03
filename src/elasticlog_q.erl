@@ -22,10 +22,10 @@
 -export([stream/3]).
 
 stream(Bucket, Keys, Head) ->
-   fun(#elasticlog{implicit = Implicit, sock = Sock}) ->
+   fun(#elasticlog{implicit = Implicit, equivalent = Equiv, sock = Sock}) ->
       [identity ||
-         ElasticKeys <- elasticlog_syntax:keys(Keys),
-         schema(Sock, ElasticKeys),
+         ElasticKeys <- elasticlog_syntax:keys(Keys, Equiv),
+         schema(Sock, Bucket, ElasticKeys),
          Schema <- lists:zip3(_, ElasticKeys, Head),
          elasticlog_syntax:pattern(Schema, Implicit),
          enable_sorting(hd(ElasticKeys), _),
@@ -35,8 +35,8 @@ stream(Bucket, Keys, Head) ->
       ]
    end.
 
-schema(Sock, Keys) ->
-   {ok, Schema} = elasticlog:schema(Sock),
+schema(Sock, Bucket, Keys) ->
+   Schema = elasticlog_schema:lookup(Sock, Bucket),
    [maps:get(Key, Schema) || {_, Key} <- Keys].
 
 head(Schema, Stream) ->
@@ -54,10 +54,8 @@ head(Schema, Stream) ->
       Stream
    ).
 
-enable_sorting({sortby, Key}, Query) ->
-   Query#{sort => Key};
-enable_sorting(_, Query) ->
-   Query.
+enable_sorting({_, Key}, Query) ->
+   Query#{sort => Key}.
 
 log_elastic_query(Query) ->
    error_logger:info_msg("~s~n", [jsx:encode(Query)]),

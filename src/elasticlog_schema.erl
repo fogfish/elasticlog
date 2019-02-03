@@ -1,10 +1,12 @@
 -module(elasticlog_schema).
 
+-compile({parse_transform, category}).
 -include_lib("semantic/include/semantic.hrl").
 
 -export([
    new/2,
-   predicate/1
+   predicate/1,
+   lookup/2
 ]).
 
 %%
@@ -79,10 +81,12 @@ predicate(Json) ->
 schema_to_rdf({_, Schema}) ->
    properties([], lens:get(lens_properties(), Schema)).
 
+properties([], #{<<"properties">> := Properties}) ->
+   [properties([P], Type) || {P, Type} <- maps:to_list(Properties)];
 properties(Prefix, #{<<"properties">> := Properties}) ->
    [
-      [{typecast:s(lists:join(<<".">>, Prefix)), undefined}]
-   ,  [properties(Prefix ++ [P], Type) || {P, Type} <- maps:to_list(Properties)]
+      [{typecast:s(lists:join(<<".">>, Prefix)), undefined}],
+      [properties(Prefix ++ [P], Type) || {P, Type} <- maps:to_list(Properties)]
    ];
 properties(Prefix, Type) ->
    [ {typecast:s(lists:join(<<".">>, Prefix)), isa(Type)} ];
@@ -110,5 +114,41 @@ isa(#{<<"type">> := <<"geo_shape">>}) -> ?GEORSS_JSON;
 isa(#{<<"type">> := <<"geo_point">>}) -> ?GEORSS_POINT;
 isa(_) -> undefined.
 
+%%
+%%
+-spec lookup(_, _) -> semantic:iri().
 
+lookup(Sock, Bucket) ->
+   case cache:get(elasticlog, Bucket) of
+      undefined ->
+         [identity ||
+            lookup_schema(Sock, Bucket),
+            schema_to_rdf(_),
+            lists:flatten(_),
+            Schema <- maps:from_list(_),
+            cache:put(elasticlog, Bucket, Schema),
+            cats:unit(Schema)
+         ];
+      Schema    ->
+         Schema
+   end.
 
+lookup_schema(Sock, Bucket) ->
+   case esio:schema(Sock) of
+      {ok, #{Bucket := Schema}} ->
+         {Bucket, Schema};
+      {ok, Schema} ->
+         lens:get(by_alias(Bucket), maps:to_list(Schema))
+   end.
+
+by_alias(Bucket) ->
+   lens:takewith(
+      fun({_, #{<<"aliases">> := X}}) ->
+         case X of
+            #{Bucket := _} ->
+               true;
+            _ ->
+               false
+         end
+      end
+   ).

@@ -9,6 +9,7 @@
 -export([all/0, init_per_suite/1, end_per_suite/1]).
 -export([
    basic_facts_query/1
+,  basic_facts_query_with_field_spec/1
 ,  basic_facts_match/1
 ,  basic_facts_infix/1
 ,  join_facts_with_bag/1
@@ -16,6 +17,8 @@
 ,  rollup_facts/1
 ,  rollup_facts_and_join/1
 ,  implicit/1
+,  equivalent/1
+,  equivalent_with_field_spec/1
 ]).
 
 all() -> 
@@ -89,6 +92,19 @@ basic_facts_query(Config) ->
 
    [
       [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
+   ] = stream:list(elasticlog:q(F, ?config(socket, Config))).
+
+%%
+%%
+basic_facts_query_with_field_spec(Config) ->
+   F = datalog("
+      ?- imdb:person(_, \"Ridley Scott\", _).
+
+      imdb:person(\"rdf:id\", required \"schema:name\", option \"schema:death\").
+   "),
+
+   [
+      [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>, undefined]
    ] = stream:list(elasticlog:q(F, ?config(socket, Config))).
 
 
@@ -235,3 +251,28 @@ implicit(Config) ->
       [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
    ] = stream:list(elasticlog:q(F, #{<<"schema:name">> => <<"Ridley Scott">>}, ?config(socket, Config))).
 
+%%
+%%
+equivalent(Config) ->
+   F = datalog("
+      ?- imdb:person(_, \"Ridley Scott\").
+
+      imdb:person(\"rdf:id\", \"foaf:name\").
+   "),
+
+   [
+      [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
+   ] = stream:list(elasticlog:q(F, undefined, #{<<"foaf:name">> => <<"schema:name">>}, ?config(socket, Config))).
+
+%%
+%%
+equivalent_with_field_spec(Config) ->
+   F = datalog("
+      ?- imdb:person(_, \"Ridley Scott\").
+
+      imdb:person(\"rdf:id\", required \"foaf:name\").
+   "),
+
+   [
+      [{iri,<<"http://example.org/person/137">>}, <<"Ridley Scott">>]
+   ] = stream:list(elasticlog:q(F, undefined, #{<<"foaf:name">> => <<"schema:name">>}, ?config(socket, Config))).
