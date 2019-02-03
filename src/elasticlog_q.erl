@@ -55,8 +55,6 @@ head(Schema, Stream) ->
    ).
 
 enable_sorting({_, Key}, Query) ->
-   Query#{sort => Key};
-enable_sorting(Key, Query) ->
    Query#{sort => Key}.
 
 log_elastic_query(Query) ->
