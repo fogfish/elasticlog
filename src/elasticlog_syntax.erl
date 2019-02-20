@@ -261,6 +261,18 @@ aggregate({histogram, Min, Max, Bin, Key}) ->
       }
    };
 
+aggregate({category, N, SubKey, Key}) ->
+   {bucket, [Key, SubKey],
+      #{
+         Key => #{
+            terms => #{
+               field => Key,
+               size  => N
+            }
+         }
+      }
+   };
+
 aggregate({category, N, Key}) ->
    {bucket, Key,
       #{

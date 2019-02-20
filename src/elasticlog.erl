@@ -95,7 +95,7 @@ schema(Sock, Schema, Opts) ->
    ].
 
 schema_deploy_bucket(Sock, Schema) ->
-   case esio:schema(Sock, maps:with([settings], Schema)) of
+   case esio:create_schema(Sock, maps:with([settings], Schema)) of
       {ok, _} ->
          ok;
       {error, {400, #{<<"error">> := #{<<"type">> := <<"resource_already_exists_exception">>}}}} ->
@@ -107,7 +107,7 @@ schema_deploy_bucket(Sock, Schema) ->
 schema_deploy_fields(_, []) ->
    ok;
 schema_deploy_fields(Sock, [Head | Tail]) ->
-   case esio:schema(Sock, Head) of
+   case esio:create_schema(Sock, Head) of
       {ok, _} ->
          schema_deploy_fields(Sock, Tail);
       {error, _} = Error ->
