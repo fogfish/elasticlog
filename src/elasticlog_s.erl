@@ -76,8 +76,8 @@ downfield({bucket, Key, _}, Aggs) ->
 downfield({metric, Key, _}, Aggs) ->
    lens:get(lens:c(lens:at(Key), lens:at(<<"value">>)), Aggs);
 
-downfield({object, {Key, SubKey}, _}, Aggs) ->
-   lens:get(lens:c(lens:at(Key), lens:at(SubKey)), Aggs);
+downfield({object, Keys, _}, Aggs) when is_list(Keys) ->
+   lens:get(lens(Keys), Aggs);
 
 downfield({object, Key, _}, Aggs) ->
    lens:get(lens:at(Key), Aggs);
@@ -85,6 +85,17 @@ downfield({object, Key, _}, Aggs) ->
 downfield({identity, _, _}, _) ->
    %% identity aggregation takes value from previous predicate.
    undefined.
+
+%%
+lens([Key]) ->
+   lens:at(Key);
+lens(Keys) ->
+   lens:c(lens_nested(Keys)).
+
+lens_nested([Key]) ->
+   [lens:at(Key)];
+lens_nested([Key | Keys]) ->
+   [lens:at(Key, #{}) | lens_nested(Keys)].
 
 log_elastic_query(Query) ->
    error_logger:info_msg("~s~n", [jsx:encode(Query)]),

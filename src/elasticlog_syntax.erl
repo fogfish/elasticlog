@@ -308,7 +308,7 @@ aggregate({stats, Key}) ->
    };
 
 aggregate({stats, Stats, Key}) ->
-   {object, {Key, Stats},
+   {object, [Key, Stats],
       #{
          Key => #{
             extended_stats => #{
@@ -330,7 +330,8 @@ aggregate({percentiles, Key}) ->
    };
 
 aggregate({percentiles, Nth, Key}) ->
-   {object, {Key, Nth},
+   io:format("==== wtf~n"),
+   {object, [Key, <<"values">>, Nth],
       #{
          Key => #{
             percentiles => #{
