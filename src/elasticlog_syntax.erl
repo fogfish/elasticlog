@@ -330,7 +330,6 @@ aggregate({percentiles, Key}) ->
    };
 
 aggregate({percentiles, Nth, Key}) ->
-   io:format("==== wtf~n"),
    {object, [Key, <<"values">>, Nth],
       #{
          Key => #{
