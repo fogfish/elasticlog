@@ -70,8 +70,8 @@ decode_bucket(Tail, #{<<"doc_count">> := Count, <<"key">> := Key} = Bucket, Pref
    decode(Tail, Bucket, [#{<<"key">> => Key, <<"count">> => Count} | Prefix], Acc).
 
 %%
-downfield({bucket, Keys, _}, Aggs) when is_list(Keys) ->
-   lens:get(lens(Keys), Aggs);
+downfield({bucket, [Key, SubKey], _}, Aggs) ->
+   lens:get(lens:c(lens:at(Key), lens:at(<<"buckets">>), lens:traverse(), lens:at(SubKey)), Aggs);
 
 downfield({bucket, Key, _}, Aggs) ->
    lens:get(lens:c(lens:at(Key), lens:at(<<"buckets">>)), Aggs);
