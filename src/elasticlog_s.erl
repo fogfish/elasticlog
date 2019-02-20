@@ -76,6 +76,9 @@ downfield({bucket, Key, _}, Aggs) ->
 downfield({metric, Key, _}, Aggs) ->
    lens:get(lens:c(lens:at(Key), lens:at(<<"value">>)), Aggs);
 
+downfield({object, {Key, SubKey}, _}, Aggs) ->
+   lens:get(lens:c(lens:at(Key), lens:at(SubKey)), Aggs);
+
 downfield({object, Key, _}, Aggs) ->
    lens:get(lens:at(Key), Aggs);
 

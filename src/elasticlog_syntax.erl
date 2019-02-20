@@ -307,8 +307,30 @@ aggregate({stats, Key}) ->
       }
    };
 
+aggregate({stats, Stats, Key}) ->
+   {object, {Key, Stats},
+      #{
+         Key => #{
+            extended_stats => #{
+               field => Key
+            }
+         }
+      }
+   };
+
 aggregate({percentiles, Key}) ->
    {object, Key,
+      #{
+         Key => #{
+            percentiles => #{
+               field => Key
+            }
+         }
+      }
+   };
+
+aggregate({percentiles, Nth, Key}) ->
+   {object, {Key, Nth},
       #{
          Key => #{
             percentiles => #{
