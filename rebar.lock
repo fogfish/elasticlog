@@ -2,7 +2,7 @@
 [{<<"cache">>,{pkg,<<"cache">>,<<"2.2.0">>},0},
  {<<"datalog">>,
   {git,"https://github.com/fogfish/datalog",
-       {ref,"836c0d96c55da070d832470fc9d3e3e7e2598795"}},
+       {ref,"36ce0e8b063349e0258df1c3addee07c6bb67d44"}},
   0},
  {<<"datum">>,{pkg,<<"datum">>,<<"4.5.0">>},0},
  {<<"esio">>,
