@@ -67,7 +67,11 @@ decode([], _, Prefix, Acc) ->
 
 %%
 decode_bucket(Tail, #{<<"doc_count">> := Count, <<"key">> := Key} = Bucket, Prefix, Acc) ->
-   decode(Tail, Bucket, [#{<<"key">> => Key, <<"count">> => Count} | Prefix], Acc).
+   decode(Tail, Bucket, [#{<<"key">> => Key, <<"count">> => Count} | Prefix], Acc);
+
+decode_bucket(Tail, Bucket, Prefix, Acc) ->
+   decode(Tail, Bucket, [Bucket | Prefix], Acc).
+
 
 %%
 downfield({bucket, [Key, SubKey], _}, Aggs) ->
