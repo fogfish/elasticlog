@@ -44,8 +44,7 @@ head(Schema, Stream) ->
       fun(#{<<"_source">> := Json, <<"_score">> := _Score}) ->
          lists:map(
             fun({Type, {_, Key}, _}) ->
-               Path = binary:split(Key, <<$.>>, [global]),
-               Lens = lens:c([lens:at(X) || X <- Path]),
+               Lens = lens(binary:split(Key, <<$.>>, [global])),
                [option || lens:get(Lens, Json), semantic:as_text(Type, _)]
             end,
             Schema
@@ -54,9 +53,22 @@ head(Schema, Stream) ->
       Stream
    ).
 
+%%
+lens([Key]) ->
+   lens:at(Key);
+lens(Keys) ->
+   lens:c(lens_nested(Keys)).
+
+lens_nested([Key]) ->
+   [lens:at(Key)];
+lens_nested([Key | Keys]) ->
+   [lens:at(Key, #{}) | lens_nested(Keys)].
+
+%%
 enable_sorting({_, Key}, Query) ->
    Query#{sort => Key}.
 
+%%
 log_elastic_query(Query) ->
    error_logger:info_msg("~s~n", [jsx:encode(Query)]),
    Query.
