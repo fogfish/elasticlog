@@ -53,7 +53,7 @@ datalog(Datalog) ->
 %%
 %% Unit tests
 %%
-schema(Config) ->
+schema(_Config) ->
    {ok, Sock} = esio:socket("http://localhost:9200/datatypes"),
 
    ok = elasticlog:schema(Sock, #{

@@ -1,7 +1,7 @@
 {application, elasticlog,
    [
-      {description, "elastic search datalog"},
-      {vsn,         "1.1.2"},
+      {description, "datalog interface for elastic search"},
+      {vsn,         "git"},
       {modules,     []},
       {registered,  []},
       {applications,[

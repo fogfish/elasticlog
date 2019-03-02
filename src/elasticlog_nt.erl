@@ -1,6 +1,8 @@
 %% @doc
 %%   iNTake interface for knowledge facts
 -module(elasticlog_nt).
+
+-compile({parse_transform, category}).
 -include_lib("semantic/include/semantic.hrl").
 
 -export([
@@ -22,13 +24,12 @@ append(Sock, #{s := S, p := P, o:= O}, Timeout) ->
    esio:update(Sock, identity(JsonS), #{<<"rdf:id">> => JsonS, JsonP => JsonO}, Timeout);
 
 append(Sock, #{} = JsonLD, Timeout) ->
-   lists:foldl(
-      fun(Fact, _) ->
-         append(Sock, Fact, Timeout)
-      end,
-      {error, nocontent},
-      semantic:jsonld(JsonLD)
-   ).
+   [identity ||
+      semantic:jsonld(JsonLD),
+      lists:map(fun semantic:typed/1, _),
+      semantic:fold(_),
+      lists:foldl(fun(Fact, _Acc) -> append(Sock, Fact, Timeout) end, {error, nocontent}, _)
+   ].
 
 %%
 %%
