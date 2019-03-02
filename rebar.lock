@@ -1,9 +1,6 @@
 {"1.1.0",
 [{<<"cache">>,{pkg,<<"cache">>,<<"2.2.0">>},0},
- {<<"datalog">>,
-  {git,"https://github.com/fogfish/datalog",
-       {ref,"36ce0e8b063349e0258df1c3addee07c6bb67d44"}},
-  0},
+ {<<"datalog">>,{pkg,<<"datalog">>,<<"2.0.2">>},0},
  {<<"datum">>,{pkg,<<"datum">>,<<"4.5.0">>},0},
  {<<"esio">>,
   {git,"https://github.com/fogfish/esio",
@@ -30,7 +27,7 @@
   {git,"https://github.com/kfsm/knet",
        {ref,"c93ef2812dd15b60d94ac30ed0785566044973b1"}},
   1},
- {<<"meck">>,{pkg,<<"meck">>,<<"0.8.12">>},1},
+ {<<"meck">>,{pkg,<<"meck">>,<<"0.8.13">>},1},
  {<<"pipe">>,{pkg,<<"pipes">>,<<"2.0.1">>},2},
  {<<"semantic">>,
   {git,"https://github.com/fogfish/semantic",
@@ -40,9 +37,10 @@
 [
 {pkg_hash,[
  {<<"cache">>, <<"3C11DBF4CD8FCD5787C95A5FB2A04038E3729CFCA0386016EEA8C953AB48A5AB">>},
+ {<<"datalog">>, <<"E51D71086AAA8470E79224225905E814C764A46800378E6DB00AC2F888651F82">>},
  {<<"datum">>, <<"0F7F064A509632C70448F9BC7E7295BD5F9CD6E3207863B176416EF14FD19E0C">>},
  {<<"jsx">>, <<"D2F6E5F069C00266CAD52FB15D87C428579EA4D7D73A33669E12679E203329DD">>},
- {<<"meck">>, <<"1F7B1A9F5D12C511848FEC26BBEFD09A21E1432EADB8982D9A8ACEB9891A3CF2">>},
+ {<<"meck">>, <<"FFEDB39F99B0B99703B8601C6F17C7F76313EE12DE6B646E671E3188401F7866">>},
  {<<"pipe">>, <<"A2B56796C63690ED0E78BB77BB389AF250BD70AFA15A6869369DBDC11087D68F">>},
  {<<"uid">>, <<"31CA7E3C9D53716A2FF425E18A33E32C141B763D47B174F757D7CAF7E4228A67">>}]}
 ].

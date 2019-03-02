@@ -10,6 +10,7 @@
         ,semantic
         ,datalog
         ,esio
+        ,cache
       ]},
       {mod, {elasticlog_app, []}},
       {env, []}
