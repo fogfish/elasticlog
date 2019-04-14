@@ -24,6 +24,7 @@
 ,  georss_point/1
 ,  georss_hash/1
 ,  georss_json/1
+,  undefined/1
 ]).
 
 all() -> 
@@ -72,7 +73,8 @@ schema(_Config) ->
       <<"xsd:gDay">> => <<"xsd:gDay">>,
       <<"georss:point">> => <<"georss:point">>,
       <<"georss:hash">> => <<"georss:hash">>,
-      <<"georss:json">> => <<"georss:json">>
+      <<"georss:json">> => <<"georss:json">>,
+      <<"undefined">> => <<"xsd:anyURI">>
    }),
 
    esio:close(Sock).
@@ -282,3 +284,13 @@ georss_json(Config) ->
       [_, #{<<"type">> := <<"Point">>, <<"coordinates">> := [23.2, 60.1]}]
    ] = stream:list(elasticlog:q(F, ?config(socket, Config))).
 
+undefined(Config) ->
+   F = datalog("
+      ?- datatypes(\"undefined\", _).
+
+      datatypes(\"rdf:id\", option \"undefined\").
+   "),
+
+   [
+      [_, undefined]
+   ] = stream:list(elasticlog:q(F, ?config(socket, Config))).
