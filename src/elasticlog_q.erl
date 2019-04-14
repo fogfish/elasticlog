@@ -55,14 +55,22 @@ head(Schema, Stream) ->
 
 %%
 lens([Key]) ->
-   lens:at(Key);
+   lens:c(lens:at(Key), lens_undefined());
 lens(Keys) ->
    lens:c(lens_nested(Keys)).
 
 lens_nested([Key]) ->
-   [lens:at(Key)];
+   [lens:at(Key), lens_undefined()];
 lens_nested([Key | Keys]) ->
    [lens:at(Key, #{}) | lens_nested(Keys)].
+
+lens_undefined() ->
+   fun
+   (Fun, null) ->
+      lens:fmap(fun(X) -> X end, Fun(undefined));
+   (Fun, Focus) ->
+      lens:fmap(fun(X) -> X end, Fun(Focus))
+   end.
 
 %%
 enable_sorting({_, Key}, Query) ->

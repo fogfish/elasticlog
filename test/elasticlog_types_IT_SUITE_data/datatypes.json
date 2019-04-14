@@ -78,4 +78,9 @@
       "rdf:id": "georss:json"
    ,  "georss:json": {"type": "Point", "coordinates": [23.2, 60.1]}
    }
+
+,  {
+      "rdf:id": "undefined"
+   ,  "undefined": null
+   }
 ]
