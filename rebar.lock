@@ -5,7 +5,7 @@
  {<<"datum">>,{pkg,<<"datum">>,<<"4.6.0">>},0},
  {<<"esio">>,
   {git,"https://github.com/fogfish/esio",
-       {ref,"b98de848e584cd186ebe83976c43c43019ad0bcc"}},
+       {ref,"8d91ae554298c8d63b385509eeb728cc65f7d240"}},
   0},
  {<<"feta">>,
   {git,"https://github.com/fogfish/feta",
